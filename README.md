@@ -22,4 +22,4 @@ Android support
 
 The library will attempt to discover and create [MulticastLocks](http://developer.android.com/reference/android/net/wifi/WifiManager.MulticastLock.html), which are required to receive multicast packets on Android devices. However, no binary dependency is created on any Android APIs, so the library can still be used on desktop JREs without any trouble.
 
-This feature was unabashedly stolen from [AndroidLIFX](https://github.com/akrs/AndroidLIFX).
+This feature was unabashedly stolen (with some adaptions) from [AndroidLIFX](https://github.com/akrs/AndroidLIFX).
