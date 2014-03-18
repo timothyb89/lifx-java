@@ -10,12 +10,15 @@ Requirements
 
 * JDK 7 or greater (NIO, etc)
 * Maven
+* [EventBus](https://github.com/timothyb89/EventBus)
 
 Building
 --------
 ```
 mvn install
 ```
+
+Note that [EventBus](https://github.com/timothyb89/EventBus) must be installed first (using the same procedure).
 
 Android support
 ---------------
