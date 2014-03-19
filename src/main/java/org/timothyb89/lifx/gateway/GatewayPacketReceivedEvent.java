@@ -1,9 +1,9 @@
-package org.timothyb89.lifx.net;
+package org.timothyb89.lifx.gateway;
 
-import org.timothyb89.lifx.gateway.Gateway;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.timothyb89.eventbus.Event;
+import org.timothyb89.lifx.net.packet.Packet;
 
 /**
  *
@@ -11,8 +11,8 @@ import org.timothyb89.eventbus.Event;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-public class GatewayFoundEvent extends Event {
+public class GatewayPacketReceivedEvent extends Event {
 	
-	private final Gateway gateway;
+	private final Packet packet;
 	
 }

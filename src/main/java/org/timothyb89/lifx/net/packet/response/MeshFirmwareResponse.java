@@ -2,6 +2,7 @@ package org.timothyb89.lifx.net.packet.response;
 
 import java.nio.ByteBuffer;
 import lombok.Getter;
+import lombok.ToString;
 import org.timothyb89.lifx.net.field.Field;
 import org.timothyb89.lifx.net.field.LittleField;
 import org.timothyb89.lifx.net.field.StringField;
@@ -13,8 +14,11 @@ import org.timothyb89.lifx.net.packet.Packet;
  *
  * @author tim
  */
+@ToString(callSuper = true)
 public class MeshFirmwareResponse extends Packet {
 
+	public static final int TYPE = 0x0F;
+	
 	public static final Field<Integer> FIELD_BUILD_SECOND   = new UInt8Field();
 	public static final Field<Integer> FIELD_BUILD_MINUTE   = new UInt8Field();
 	public static final Field<Integer> FIELD_BUILD_HOUR     = new UInt8Field();
@@ -45,7 +49,7 @@ public class MeshFirmwareResponse extends Packet {
 	
 	@Override
 	public int packetType() {
-		return 0x0F;
+		return TYPE;
 	}
 
 	@Override
@@ -86,6 +90,11 @@ public class MeshFirmwareResponse extends Packet {
 				.put(FIELD_INSTALL_MONTH.bytes(installMonth))
 				.put(FIELD_INSTALL_YEAR.bytes(installYear));
 				
+	}
+
+	@Override
+	public int[] expectedResponses() {
+		return new int[] {};
 	}
 	
 }

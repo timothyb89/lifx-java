@@ -16,6 +16,8 @@ import org.timothyb89.lifx.net.packet.Packet;
 @ToString(callSuper = true)
 public class PANGatewayResponse extends Packet {
 
+	public static final int TYPE = 0x03;
+	
 	public static final Field<Integer> FIELD_SERVICE = new UInt8Field();
 	public static final Field<Long>    FIELD_PORT    = new LittleField(new UInt32Field());
 
@@ -33,7 +35,7 @@ public class PANGatewayResponse extends Packet {
 
 	@Override
 	public int packetType() {
-		return 0x03;
+		return TYPE;
 	}
 
 	@Override
@@ -46,6 +48,11 @@ public class PANGatewayResponse extends Packet {
 		return ByteBuffer.allocate(packetLength())
 				.put(FIELD_SERVICE.bytes(service))
 				.put(FIELD_PORT.bytes(port));
+	}
+
+	@Override
+	public int[] expectedResponses() {
+		return new int[] {};
 	}
 	
 }

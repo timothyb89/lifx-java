@@ -1,4 +1,4 @@
-package org.timothyb89.lifx.bulb;
+package org.timothyb89.lifx.gateway;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;

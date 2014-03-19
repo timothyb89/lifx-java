@@ -3,33 +3,30 @@ package org.timothyb89.lifx.net.packet.request;
 import java.nio.ByteBuffer;
 import lombok.ToString;
 import org.timothyb89.lifx.net.packet.Packet;
+import org.timothyb89.lifx.net.packet.response.PowerStateResponse;
 
 /**
  *
  * @author tim
  */
 @ToString(callSuper = true)
-public class PANGatewayRequest extends Packet {
+public class PowerStateRequest extends Packet {
 
-	public static final int PROTOCOL_DEFAULT = 21504; // ??
-	
-	public PANGatewayRequest() {
-		protocol = PROTOCOL_DEFAULT;
-	}
+	public static final int TYPE = 0x14;
 	
 	@Override
-	public int packetLength() {
+	public int packetType() {
+		return TYPE;
+	}
+
+	@Override
+	protected int packetLength() {
 		return 0;
 	}
 
 	@Override
-	public int packetType() {
-		return 0x02;
-	}
-
-	@Override
 	protected void parsePacket(ByteBuffer bytes) {
-		// empty
+		// do nothing
 	}
 
 	@Override
@@ -39,7 +36,9 @@ public class PANGatewayRequest extends Packet {
 
 	@Override
 	public int[] expectedResponses() {
-		return new int[] {}; // UDP packets cannot have responses
+		return new int[] {
+			PowerStateResponse.TYPE
+		};
 	}
 	
 }

@@ -1,5 +1,7 @@
 package org.timothyb89.lifx.net;
 
+import org.timothyb89.lifx.gateway.GatewayManager;
+import org.timothyb89.lifx.gateway.Gateway;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -16,8 +18,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.timothyb89.eventbus.EventBus;
 import org.timothyb89.eventbus.EventBusClient;
 import org.timothyb89.eventbus.EventBusProvider;
-import org.timothyb89.lifx.bulb.Gateway;
-import org.timothyb89.lifx.bulb.GatewayManager;
 import org.timothyb89.lifx.net.android.WifiManagerProxy;
 import org.timothyb89.lifx.net.android.WifiManagerProxy.MulticastLockProxy;
 import org.timothyb89.lifx.net.packet.ByteBufferTest;
@@ -60,11 +60,11 @@ public class BroadcastListener implements EventBusProvider {
 		channel.socket().setBroadcast(true);
 		channel.configureBlocking(true);
 		
-		listenerThread = new Thread(listener);
+		listenerThread = new Thread(listener, "lifx-udp-listen");
 		listenerThread.setDaemon(daemon);
 		listenerThread.start();
 		
-		broadcastThread = new Thread(broadcaster);
+		broadcastThread = new Thread(broadcaster, "lifx-udp-broadcast");
 		broadcastThread.setDaemon(daemon);
 		broadcastThread.start();
 		
@@ -81,7 +81,6 @@ public class BroadcastListener implements EventBusProvider {
 		}
 		
 		channel.close();
-		listenerThread.interrupt();
 		
 		log.info("Listening stopped");
 	}

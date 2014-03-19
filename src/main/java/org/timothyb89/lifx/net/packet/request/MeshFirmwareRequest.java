@@ -1,16 +1,20 @@
-package org.timothyb89.lifx.net.packet;
+package org.timothyb89.lifx.net.packet.request;
 
 import java.nio.ByteBuffer;
+import org.timothyb89.lifx.net.packet.Packet;
+import org.timothyb89.lifx.net.packet.response.MeshFirmwareResponse;
 
 /**
  *
  * @author tim
  */
-public class GenericPacket extends Packet {
+public class MeshFirmwareRequest extends Packet {
 
+	public static final int TYPE = 0x0E;
+	
 	@Override
 	public int packetType() {
-		return 0;
+		return TYPE;
 	}
 
 	@Override
@@ -20,7 +24,7 @@ public class GenericPacket extends Packet {
 
 	@Override
 	protected void parsePacket(ByteBuffer bytes) {
-		
+		// do nothing
 	}
 
 	@Override
@@ -30,7 +34,9 @@ public class GenericPacket extends Packet {
 
 	@Override
 	public int[] expectedResponses() {
-		return new int[] {};
+		return new int[] {
+			MeshFirmwareResponse.TYPE
+		};
 	}
 	
 }

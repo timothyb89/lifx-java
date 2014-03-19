@@ -1,9 +1,10 @@
 package org.timothyb89.lifx.net.packet;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 import lombok.Getter;
 import lombok.ToString;
+import org.timothyb89.lifx.gateway.Gateway;
+import org.timothyb89.lifx.gateway.PacketResponseFuture;
 import org.timothyb89.lifx.net.field.ByteField;
 import org.timothyb89.lifx.net.field.Field;
 import org.timothyb89.lifx.net.field.LittleField;
@@ -13,7 +14,9 @@ import org.timothyb89.lifx.net.field.UInt16Field;
 import org.timothyb89.lifx.net.field.UInt64Field;
 
 /**
- * 
+ * Represents an abstract packet, providing conversion functionality to and from
+ * {@link ByteBuffer}s for common packet (preamble) fields. Subtypes of this
+ * class can provide conversion functionality for specialized fields.
  * @author tim
  */
 @ToString(of = { "packetType", "size", "bulbAddress" })
@@ -95,6 +98,12 @@ public abstract class Packet {
 				.put(ByteBuffer.allocate(FIELD_RESERVED_4.getLength())); // empty
 	}
 	
+	/**
+	 * Sets default preamble values. If needed, subclasses may override these
+	 * values by specifically overriding this method, or by setting individual
+	 * values within the constructor, as this method is called automatically
+	 * during initialization.
+	 */
 	protected void preambleDefaults() {
 		size = 0; // not used when sending
 		protocol = 13312; // ?
@@ -104,10 +113,29 @@ public abstract class Packet {
 		packetType = packetType();
 	}
 	
+	/**
+	 * Returns the packet type. Note that this value is technically distinct
+	 * from {@link #getPacketType()} in that it returns the packet type the
+	 * current {@code Packet} subtype is designed to parse, while
+	 * {@code getPacketType()} returns the actual {@code packetType} field of
+	 * a parsed packet. However, these values should always match.
+	 * @return the packet type intended to be handled by this Packet subtype
+	 */
 	public abstract int packetType();
 	
+	/**
+	 * Returns the length of the payload specific to this packet subtype. The
+	 * length of the preamble is specifically excluded.
+	 * @return the length of this specialized packet payload
+	 */
 	protected abstract int packetLength();
 	
+	/**
+	 * Parses the given {@link ByteBuffer} into class fields. Subtypes may
+	 * implement {@link #parsePacket(ByteBuffer)} to parse additional fields;
+	 * the preamble by default is always parsed.
+	 * @param bytes the buffer to extract data from
+	 */
 	public void parse(ByteBuffer bytes) {
 		//ByteBufferTest.printBuffer(bytes);
 		bytes.rewind();
@@ -115,8 +143,22 @@ public abstract class Packet {
 		parsePacket(bytes);
 	}
 	
+	/**
+	 * Extracts data from the given {@link ByteBuffer} into fields specific to
+	 * this packet subtype. The preamble will already have been parsed; as such,
+	 * the buffer will be positioned at the end of the preamble. If needed,
+	 * {@link #preambleLength()} may be used to restore the position of the
+	 * buffer.
+	 * @param bytes the raw bytes to parse
+	 */
 	protected abstract void parsePacket(ByteBuffer bytes);
 	
+	/**
+	 * Returns a {@link ByteBuffer} containing the full payload for this packet,
+	 * including the populated preamble and any specialized packet payload. The
+	 * returned buffer will be at position zero.
+	 * @return the full packet payload
+	 */
 	public ByteBuffer bytes() {
 		ByteBuffer preamble = preambleBytes();
 		preamble.rewind();
@@ -132,10 +174,39 @@ public abstract class Packet {
 		return ret;
 	}
 	
+	/**
+	 * Returns a {@link ByteBuffer} containing the payload for this packet. Its
+	 * length must match the value of {@link #packetLength()}. This specifically
+	 * excludes preamble fields and should contain only data specific to the
+	 * packet subtype.
+	 * <p>Note that returned ByteBuffers will have {@link ByteBuffer#rewind()}
+	 * called automatically before they are appended to the final packet
+	 * buffer.</p>
+	 * @return the packet payload
+	 */
 	protected abstract ByteBuffer packetBytes();
 	
+	/**
+	 * Gets the total length of this packet, in bytes.
+	 * @return the total length of this packet
+	 */
 	public int length() {
 		return preambleLength() + packetLength();
 	}
+	
+	/**
+	 * Returns a list of expected response packet types. An empty array means
+	 * no responses are expected (suitable for response packet definitions),
+	 * while one or more values will cause {@link PacketResponseFuture}
+	 * instances returned by {@link Gateway} to wait until all packets of all
+	 * the listed types have been received before returning a value.
+	 * 
+	 * <p>Note that optional response packets, or responses sent over UDP,
+	 * should not be listed here. Any instance where an optional packet is not
+	 * received will prevent other futures from being fulfilled.</p>
+	 * 
+	 * @return a list of expected responses
+	 */
+	public abstract int[] expectedResponses();
 	
 }
