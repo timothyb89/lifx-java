@@ -45,7 +45,7 @@ public class BroadcastListener implements EventBusProvider {
 	
 	public BroadcastListener() {
 		bus = new EventBus() {{
-			add(GatewayFoundEvent.class);
+			add(GatewayDiscoveredEvent.class);
 		}};
 	}
 	
@@ -117,7 +117,7 @@ public class BroadcastListener implements EventBusProvider {
 							
 							log.debug("Gateway found: {}", g);
 							
-							bus.push(new GatewayFoundEvent(g));
+							bus.push(new GatewayDiscoveredEvent(g));
 						} else {
 							log.debug("Existing gateway found.");
 						}

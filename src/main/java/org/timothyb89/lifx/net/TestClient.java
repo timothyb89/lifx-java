@@ -29,7 +29,7 @@ public class TestClient {
 	}
 	
 	@EventHandler
-	public void gatewayFound(GatewayFoundEvent ev) {
+	public void gatewayFound(GatewayDiscoveredEvent ev) {
 		try {
 			listener.stopListen(); // no need to spam
 		} catch (IOException ex) {

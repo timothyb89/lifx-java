@@ -11,7 +11,7 @@ import org.timothyb89.eventbus.Event;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-public class GatewayFoundEvent extends Event {
+public class GatewayDiscoveredEvent extends Event {
 	
 	private final Gateway gateway;
 	
