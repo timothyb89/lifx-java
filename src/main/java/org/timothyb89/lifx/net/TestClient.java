@@ -4,11 +4,13 @@ import java.io.IOException;
 import java.util.concurrent.Future;
 import lombok.extern.slf4j.Slf4j;
 import org.timothyb89.eventbus.EventHandler;
+import org.timothyb89.lifx.bulb.PowerState;
 import org.timothyb89.lifx.gateway.Gateway;
 import org.timothyb89.lifx.gateway.GatewayBulbDiscoveredEvent;
 import org.timothyb89.lifx.gateway.GatewayPacketReceivedEvent;
 import org.timothyb89.lifx.gateway.PacketResponse;
 import org.timothyb89.lifx.net.packet.request.PowerStateRequest;
+import org.timothyb89.lifx.net.packet.request.SetPowerStateRequest;
 import org.timothyb89.lifx.net.packet.response.PowerStateResponse;
 
 /**
@@ -42,22 +44,18 @@ public class TestClient {
 		try {
 			g.connect();
 			
-			g.send(new PowerStateRequest());
-			//PacketResponse resp = respFuture.get();
-			
-			//PowerStateResponse psr = resp.get(PowerStateResponse.class);
-			
-			//System.out.println(resp);
-			
-			//System.out.println(psr.getState());
+			//g.send(new PowerStateRequest());
+			//g.send(new SetPowerStateRequest(PowerState.ON));
 		} catch (Exception ex) {
 			log.error("couldn't connect", ex);
 		}
 	}
 	
 	@EventHandler
-	public void bulbDiscovered(GatewayBulbDiscoveredEvent event) {
+	public void bulbDiscovered(GatewayBulbDiscoveredEvent event) throws IOException {
 		log.info("Bulb found: {}", event.getBulb());
+		
+		event.getBulb().send(new SetPowerStateRequest(PowerState.OFF));
 	}
 	
 	@EventHandler

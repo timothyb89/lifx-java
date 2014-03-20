@@ -1,5 +1,6 @@
 package org.timothyb89.lifx.bulb;
 
+import java.io.IOException;
 import lombok.Getter;
 import lombok.ToString;
 import org.timothyb89.eventbus.EventBus;
@@ -59,6 +60,17 @@ public class Bulb implements EventBusProvider {
 		powerState = packet.getPower();
 	}
 	
+	/**
+	 * Sends a packet to this bulb. Note that the {@code site} field will be set
+	 * to the address of this bulb. See {@link Gateway#send(Packet)} for more
+	 * information on this behavior.
+	 * @param packet the packet to send
+	 */
+	public void send(Packet packet) throws IOException {
+		packet.setSite(address);
+		gateway.sendRaw(packet);
+	}
+	
 	@EventHandler
 	public void packetReceived(GatewayPacketReceivedEvent event) {
 		Packet p = event.getPacket();
@@ -69,6 +81,8 @@ public class Bulb implements EventBusProvider {
 		} else if (p instanceof LightStatusResponse) {
 			
 		}
+		
+		// TODO implement events + updates
 	}
 	
 }
