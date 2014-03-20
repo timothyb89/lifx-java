@@ -31,7 +31,10 @@ public class StringField extends Field<String> {
 		
 		ByteBuffer field = ByteBuffer.wrap(buf);
 		
-		return CHARSET.decode(field).toString();
+		String ret = CHARSET.decode(field).toString();
+		ret = ret.replace("\0", "");
+		
+		return ret;
 	}
 
 	@Override

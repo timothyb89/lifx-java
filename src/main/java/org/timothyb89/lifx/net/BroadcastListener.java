@@ -68,7 +68,7 @@ public class BroadcastListener implements EventBusProvider {
 		broadcastThread.setDaemon(daemon);
 		broadcastThread.start();
 		
-		log.info("Started listening on port " + BROADCAST_PORT);
+		log.debug("Started listening on port " + BROADCAST_PORT);
 	}
 	
 	public void startListen() throws IOException {
@@ -82,7 +82,7 @@ public class BroadcastListener implements EventBusProvider {
 		
 		channel.close();
 		
-		log.info("Listening stopped");
+		log.debug("Listening stopped");
 	}
 	
 	private final Runnable listener = new Runnable() {
@@ -115,14 +115,14 @@ public class BroadcastListener implements EventBusProvider {
 							Gateway g = new Gateway(a, port, packet.getSite());
 							manager.registerGateway(g);
 							
-							log.info("Gateway found: {}", g);
+							log.debug("Gateway found: {}", g);
 							
 							bus.push(new GatewayFoundEvent(g));
 						} else {
-							log.info("Existing gateway found.");
+							log.debug("Existing gateway found.");
 						}
 					} else {
-						log.warn("Unknown UDP packet received: " + type);
+						log.debug("Unknown UDP packet received: " + type);
 					}
 					
 					//PacketHandler h = PacketFactory.createHandler(type);
@@ -135,7 +135,7 @@ public class BroadcastListener implements EventBusProvider {
 					//}
 				} catch (ClosedChannelException ex) {
 					// thread killed
-					log.info("Listener ended");
+					log.debug("Listener ended");
 					break;
 				} catch (IOException ex) {
 					log.error("Error while receiving packet", ex);
@@ -164,7 +164,7 @@ public class BroadcastListener implements EventBusProvider {
 			while (true) {
 				try {
 					channel.send(r.bytes(), a);
-					log.info("discovery packet sent");
+					log.debug("discovery packet sent");
 					
 					Thread.sleep(BROADCAST_DELAY);
 				} catch (ClosedChannelException | InterruptedException ex) {

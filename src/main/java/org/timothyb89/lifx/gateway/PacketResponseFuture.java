@@ -23,6 +23,12 @@ public class PacketResponseFuture implements Future<PacketResponse> {
 		this.response = response;
 		
 		queue = new ArrayBlockingQueue<>(1);
+		
+		// empty responses are always "fulfilled"
+		if (response.isFulfilled()) {
+			queue.offer(response);
+		}
+		
 		cachedValue = null;
 	}
 	

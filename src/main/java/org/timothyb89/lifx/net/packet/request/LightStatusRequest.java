@@ -1,18 +1,15 @@
 package org.timothyb89.lifx.net.packet.request;
 
 import java.nio.ByteBuffer;
-import lombok.ToString;
 import org.timothyb89.lifx.net.packet.Packet;
-import org.timothyb89.lifx.net.packet.response.PowerStateResponse;
 
 /**
  *
  * @author tim
  */
-@ToString(callSuper = true)
-public class PowerStateRequest extends Packet {
+public class LightStatusRequest extends Packet {
 
-	public static final int TYPE = 0x14;
+	public static final int TYPE = 0x65;
 	
 	@Override
 	public int packetType() {
@@ -36,9 +33,7 @@ public class PowerStateRequest extends Packet {
 
 	@Override
 	public int[] expectedResponses() {
-		return new int[] {
-			//PowerStateResponse.TYPE // apparently not expected?
-		};
+		return new int[] {};
 	}
 	
 }

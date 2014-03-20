@@ -2,6 +2,7 @@ package org.timothyb89.lifx.net.packet;
 
 import java.nio.ByteBuffer;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 import org.timothyb89.lifx.gateway.Gateway;
 import org.timothyb89.lifx.gateway.PacketResponseFuture;
@@ -51,7 +52,7 @@ public abstract class Packet {
 	@Getter protected ByteBuffer reserved1;
 	@Getter protected MACAddress bulbAddress;
 	@Getter protected ByteBuffer reserved2;
-	@Getter protected MACAddress site;
+	@Getter @Setter protected MACAddress site;
 	@Getter protected ByteBuffer reserved3;
 	@Getter protected long timestamp;
 	@Getter protected int packetType;

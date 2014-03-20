@@ -52,7 +52,7 @@ public class WifiManagerProxy {
 			
 			return new WifiManagerProxy(wifiManager);
 		} catch (ClassNotFoundException ex) {
-			log.info("android.content.Context not found - platform is not android");
+			log.debug("android.content.Context not found - platform is not android");
 			return new WifiManagerProxy(null);
 		} catch (ReflectiveOperationException ex) {
 			return new WifiManagerProxy(null);

@@ -4,8 +4,10 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Future;
 import lombok.Getter;
@@ -14,10 +16,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.timothyb89.eventbus.EventBus;
 import org.timothyb89.eventbus.EventBusClient;
 import org.timothyb89.eventbus.EventBusProvider;
+import org.timothyb89.eventbus.EventHandler;
+import org.timothyb89.lifx.bulb.Bulb;
 import org.timothyb89.lifx.net.field.MACAddress;
 import org.timothyb89.lifx.net.packet.Packet;
 import org.timothyb89.lifx.net.packet.PacketFactory;
 import org.timothyb89.lifx.net.packet.handler.PacketHandler;
+import org.timothyb89.lifx.net.packet.request.LightStatusRequest;
+import org.timothyb89.lifx.net.packet.response.LightStatusResponse;
 
 /**
  * Defines a basic gateway. This class maintains a TCP connection to a gateway
@@ -26,7 +32,7 @@ import org.timothyb89.lifx.net.packet.handler.PacketHandler;
  * @author tim
  */
 @Slf4j
-@ToString
+@ToString(of = { "ipAddress", "port", "macAddress", "bulbs" })
 public class Gateway implements EventBusProvider {
 	
 	@Getter private final InetSocketAddress ipAddress;
@@ -39,6 +45,8 @@ public class Gateway implements EventBusProvider {
 	
 	private SocketChannel channel;
 	private Thread listenerThread;
+	
+	private List<Bulb> bulbs;
 
 	public Gateway(InetSocketAddress ipAddress, int port, MACAddress macAddress) {
 		this.ipAddress = ipAddress;
@@ -47,10 +55,17 @@ public class Gateway implements EventBusProvider {
 		
 		responses = new ConcurrentLinkedDeque<>();
 		
+		bulbs = Collections.synchronizedList(new LinkedList<Bulb>());
+		
 		bus = new EventBus() {{
+			add(GatewayConnectedEvent.class);
+			add(GatewayDisconnectedEvent.class);
 			add(GatewayPacketSentEvent.class);
 			add(GatewayPacketReceivedEvent.class);
+			add(GatewayBulbDiscoveredEvent.class);
 		}};
+		
+		bus.register(this);
 	}
 
 	@Override
@@ -64,6 +79,11 @@ public class Gateway implements EventBusProvider {
 		
 		listenerThread = new Thread(listener, "lifx-tcp-listen");
 		listenerThread.start();
+		
+		bus.push(new GatewayConnectedEvent(this));
+		
+		// try to find available bulbs
+		send(new LightStatusRequest());
 	}
 	
 	public boolean isConnected() {
@@ -78,7 +98,22 @@ public class Gateway implements EventBusProvider {
 		}
 	}
 	
-	public Future<PacketResponse> send(Packet packet) throws IOException {
+	/**
+	 * Sends the given raw packet. Most commands require a set {@code site}
+	 * field; {@link #send(Packet)} will automatically set this to the address
+	 * of this gateway. This method leaves the {@code site} field of the packet
+	 * unmodified and send the packet with whatever site field it has currently
+	 * set.
+	 * <p>If applicable, a Future containing a {@link PacketResponse} object is
+	 * returned with any response packets. Expected packet types must first be
+	 * configured in {@link Packet#expectedResponses()}. Note that most commands
+	 * that trigger responses cannot be used with this mechanism as responses
+	 * are not guaranteed.</p>
+	 * @param packet the packet to send
+	 * @return a Future containing any packet responses
+	 * @throws IOException 
+	 */
+	public Future<PacketResponse> sendRaw(Packet packet) throws IOException {
 		PacketResponseFuture f = new PacketResponseFuture(packet);
 		responses.offer(f);
 		
@@ -87,6 +122,56 @@ public class Gateway implements EventBusProvider {
 		bus.push(new GatewayPacketSentEvent(packet, f));
 		
 		return f;
+	}
+	
+	/**
+	 * Sends the given packet to the gateway. The {@code site} field of the
+	 * packet will be set to the address of this gateway; if this is undesired,
+	 * use {@link #sendRaw(Packet)}. Generally, this will result in the packet
+	 * being distributed to all bulbs connected to the gateway, and can result
+	 * in one (or many) responses.
+	 * @see #sendRaw(Packet)
+	 * @param packet the packet to send
+	 * @return a Future containing any packet responses
+	 * @throws IOException 
+	 */
+	public Future<PacketResponse> send(Packet packet) throws IOException {
+		packet.setSite(macAddress);
+		return sendRaw(packet);
+	}
+	
+	public List<Bulb> getBulbs() {
+		return Collections.unmodifiableList(bulbs);
+	}
+	
+	public Bulb getBulb(MACAddress address) {
+		for (Bulb b : bulbs) {
+			if (b.getAddress().getHex().equalsIgnoreCase(address.getHex())) {
+				return b;
+			}
+		}
+		
+		return null;
+	}
+	
+	@EventHandler
+	public void bulbDiscoveryListener(GatewayPacketReceivedEvent event) {
+		Packet p = event.getPacket();
+		
+		if (p instanceof LightStatusResponse) {
+			LightStatusResponse resp = (LightStatusResponse) p;
+			
+			Bulb bulb = getBulb(resp.getBulbAddress());
+			if (bulb == null) {
+				bulb = new Bulb(this, resp.getBulbAddress());
+				bulb.valuesFromPacket(resp);
+				bulbs.add(bulb);
+				
+				log.debug("Bulb discovered: {}", bulb);
+				
+				bus.push(new GatewayBulbDiscoveredEvent(this, bulb));
+			}
+		}
 	}
 	
 	private Runnable listener = new Runnable() {
@@ -108,7 +193,7 @@ public class Gateway implements EventBusProvider {
 					
 					sizeBuffer.rewind();
 					
-					log.info("reading {} additional bytes ...", size);
+					log.debug("Reading {} additional bytes ...", size);
 					
 					// append the size back into the final buffer, so we get
 					// a full packet (for the parser)
@@ -124,12 +209,12 @@ public class Gateway implements EventBusProvider {
 					packetType.limit(34);
 					int type = Packet.FIELD_PACKET_TYPE.value(packetType);
 					
-					log.info("Packet type {} received", String.format("0x%02X", type));
+					log.debug("Packet type {} received", String.format("0x%02X", type));
 					
 					// attempt to handle the packet
 					PacketHandler handler = PacketFactory.createHandler(type);
 					if (handler == null) {
-						log.warn("Unknown packet type: {}",
+						log.debug("Unknown packet type: {}",
 								String.format("0x%02X", type));
 						continue;
 					}
@@ -147,7 +232,7 @@ public class Gateway implements EventBusProvider {
 					PacketResponseFuture recipient = null;
 					for (PacketResponseFuture f : responses) {
 						if (f.expectsResponse(type)) {
-							log.info("Response expected packet type {}",
+							log.debug("Response expected packet type {}",
 									String.format("0x%02X", type));
 							recipient = f;
 							break;
@@ -159,7 +244,7 @@ public class Gateway implements EventBusProvider {
 						recipient.putResponse(packet);
 
 						if (recipient.isFulfilled()) {
-							log.info("Fulfilled response");
+							log.debug("Fulfilled response");
 							responses.remove(recipient);
 							bus.push(new GatewayResponseFulfilledEvent(recipient));
 						}
@@ -169,6 +254,8 @@ public class Gateway implements EventBusProvider {
 					log.error("Error reading packet", ex);
 				}
 			}
+			
+			bus.push(new GatewayDisconnectedEvent(Gateway.this));
 		}
 		
 	};

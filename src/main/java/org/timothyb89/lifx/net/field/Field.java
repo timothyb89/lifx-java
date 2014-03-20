@@ -33,4 +33,8 @@ public abstract class Field<T> {
 	
 	protected abstract ByteBuffer bytesInternal(T value);
 	
+	public Field<T> little() {
+		return new LittleField<T>(this);
+	}
+	
 }

@@ -34,9 +34,6 @@ public class PowerStateResponse extends Packet {
 	@Override
 	protected void parsePacket(ByteBuffer bytes) {
 		int stateValue = FIELD_STATE.value(bytes);
-		
-		System.out.printf("debug VALUE = 0x%02X -> %d\n", stateValue, stateValue);
-		
 		state = PowerState.fromValue(stateValue);
 	}
 
