@@ -3,7 +3,7 @@ lifx-java
 
 A Java library for interacting with LIFX WiFi LED bulbs, targetting both desktop Java 7 and recent Android releases (4.4+, requires full JDK 7 support). Heavily inspired by and partially based on [lifxjs](https://github.com/magicmonkey/lifxjs).
 
-This library is not yet finished! Currently it only supports UDP gateway discovery, but support for most other features should be added soon.
+This library is not yet finished! Currently it only supports gateway and bulb discovery, but support for most other features should be added soon.
 
 Requirements
 ------------
