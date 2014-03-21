@@ -12,6 +12,7 @@ import org.timothyb89.lifx.gateway.GatewayPacketReceivedEvent;
 import org.timothyb89.lifx.gateway.PacketResponseFuture;
 import org.timothyb89.lifx.net.field.MACAddress;
 import org.timothyb89.lifx.net.packet.Packet;
+import org.timothyb89.lifx.net.packet.request.SetPowerStateRequest;
 import org.timothyb89.lifx.net.packet.response.LightStatusResponse;
 import org.timothyb89.lifx.net.packet.response.PowerStateResponse;
 
@@ -72,6 +73,36 @@ public class Bulb implements EventBusProvider {
 	public PacketResponseFuture send(Packet packet) throws IOException {
 		packet.setSite(address);
 		return gateway.sendRaw(packet);
+	}
+	
+	/**
+	 * Sets the power state of this bulb. A {@link SetPowerStateRequest} will
+	 * be sent to this bulb. Note that the state will not be updated
+	 * immediately; a {@link PowerStateResponse} or a
+	 * {@link LightStatusResponse} must be received first.
+	 * @param state the new state to set
+	 * @throws java.io.IOException
+	 */
+	public void setPowerState(PowerState state) throws IOException {
+		send(new SetPowerStateRequest(state));
+	}
+	
+	/**
+	 * Turns off this bulb.
+	 * @see #setPowerState(PowerState) 
+	 * @throws java.io.IOException
+	 */
+	public void turnOff() throws IOException {
+		setPowerState(PowerState.OFF);
+	}
+	
+	/**
+	 * Turns on this bulb.
+	 * @see #setPowerState(PowerState) 
+	 * @throws IOException 
+	 */
+	public void turnOn() throws IOException {
+		setPowerState(PowerState.ON);
 	}
 	
 	@EventHandler
