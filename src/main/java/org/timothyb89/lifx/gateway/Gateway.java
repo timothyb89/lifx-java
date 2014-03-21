@@ -113,7 +113,7 @@ public class Gateway implements EventBusProvider {
 	 * @return a Future containing any packet responses
 	 * @throws IOException 
 	 */
-	public Future<PacketResponse> sendRaw(Packet packet) throws IOException {
+	public PacketResponseFuture sendRaw(Packet packet) throws IOException {
 		PacketResponseFuture f = new PacketResponseFuture(packet);
 		responses.offer(f);
 		
@@ -130,6 +130,11 @@ public class Gateway implements EventBusProvider {
 	 * use {@link #sendRaw(Packet)}. Generally, this will result in the packet
 	 * being distributed to all bulbs connected to the gateway, and can result
 	 * in one (or many) responses.
+	 * <p>Note that you <b>cannot</b> wait on a future from an event
+	 * notification: events are dispatched on the input thread, so a blocking
+	 * wait <i>will</i> cause a deadlock. As a general rule blocking on the
+	 * event thread is discouraged; a different (or new) thread should be used,
+	 * and is a requirement in most contexts here.</p>
 	 * @see #sendRaw(Packet)
 	 * @param packet the packet to send
 	 * @return a Future containing any packet responses
@@ -228,16 +233,28 @@ public class Gateway implements EventBusProvider {
 					
 					bus.push(new GatewayPacketReceivedEvent(packet));
 					
+					// clean up fulfilled (empty) response futures
+					List<PacketResponseFuture> toRemove = new LinkedList<>();
+					
 					// is this a response?
 					PacketResponseFuture recipient = null;
 					for (PacketResponseFuture f : responses) {
-						if (f.expectsResponse(type)) {
+						if (f.isFulfilled()) {
+							toRemove.add(f);
+							continue;
+						}
+						
+						if (recipient == null&& f.expectsResponse(
+								type, packet.getBulbAddress())) {
+							
 							log.debug("Response expected packet type {}",
 									String.format("0x%02X", type));
+							
 							recipient = f;
-							break;
 						}
 					}
+					
+					responses.removeAll(toRemove);
 					
 					// notify the recipient, if any
 					if (recipient != null) {

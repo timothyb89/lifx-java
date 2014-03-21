@@ -9,6 +9,7 @@ import org.timothyb89.eventbus.EventBusProvider;
 import org.timothyb89.eventbus.EventHandler;
 import org.timothyb89.lifx.gateway.Gateway;
 import org.timothyb89.lifx.gateway.GatewayPacketReceivedEvent;
+import org.timothyb89.lifx.gateway.PacketResponseFuture;
 import org.timothyb89.lifx.net.field.MACAddress;
 import org.timothyb89.lifx.net.packet.Packet;
 import org.timothyb89.lifx.net.packet.response.LightStatusResponse;
@@ -65,10 +66,12 @@ public class Bulb implements EventBusProvider {
 	 * to the address of this bulb. See {@link Gateway#send(Packet)} for more
 	 * information on this behavior.
 	 * @param packet the packet to send
+	 * @throws IOException
+	 * @return a {@link PacketResponseFuture}
 	 */
-	public void send(Packet packet) throws IOException {
+	public PacketResponseFuture send(Packet packet) throws IOException {
 		packet.setSite(address);
-		gateway.sendRaw(packet);
+		return gateway.sendRaw(packet);
 	}
 	
 	@EventHandler

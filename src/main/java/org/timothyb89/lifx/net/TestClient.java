@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.concurrent.Future;
 import lombok.extern.slf4j.Slf4j;
 import org.timothyb89.eventbus.EventHandler;
+import org.timothyb89.lifx.bulb.Bulb;
 import org.timothyb89.lifx.bulb.PowerState;
 import org.timothyb89.lifx.gateway.Gateway;
 import org.timothyb89.lifx.gateway.GatewayBulbDiscoveredEvent;
@@ -54,8 +55,24 @@ public class TestClient {
 	@EventHandler
 	public void bulbDiscovered(GatewayBulbDiscoveredEvent event) throws IOException {
 		log.info("Bulb found: {}", event.getBulb());
+		Bulb b = event.getBulb();
 		
-		event.getBulb().send(new SetPowerStateRequest(PowerState.OFF));
+		final Future<PacketResponse> resp = b.send(new SetPowerStateRequest(PowerState.ON))
+				.expect(PowerStateResponse.TYPE, b.getAddress());
+
+		new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				try {
+					PowerStateResponse state = resp.get().get(PowerStateResponse.class);
+					System.out.println("state is " + state);
+				} catch (Exception ex) {
+					
+				}
+			}
+			
+		}).start();
 	}
 	
 	@EventHandler
