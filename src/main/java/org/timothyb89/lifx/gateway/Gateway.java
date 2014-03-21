@@ -18,11 +18,13 @@ import org.timothyb89.eventbus.EventBusClient;
 import org.timothyb89.eventbus.EventBusProvider;
 import org.timothyb89.eventbus.EventHandler;
 import org.timothyb89.lifx.bulb.Bulb;
+import org.timothyb89.lifx.bulb.PowerState;
 import org.timothyb89.lifx.net.field.MACAddress;
 import org.timothyb89.lifx.net.packet.Packet;
 import org.timothyb89.lifx.net.packet.PacketFactory;
 import org.timothyb89.lifx.net.packet.handler.PacketHandler;
 import org.timothyb89.lifx.net.packet.request.LightStatusRequest;
+import org.timothyb89.lifx.net.packet.request.SetPowerStateRequest;
 import org.timothyb89.lifx.net.packet.response.LightStatusResponse;
 
 /**
@@ -73,6 +75,10 @@ public class Gateway implements EventBusProvider {
 		return bus.getClient();
 	}
 	
+	/**
+	 * Attempts to establish a connection to this gateway.
+	 * @throws IOException 
+	 */
 	public void connect() throws IOException {
 		channel = SocketChannel.open();
 		channel.connect(new InetSocketAddress(ipAddress.getAddress(), port));
@@ -83,7 +89,7 @@ public class Gateway implements EventBusProvider {
 		bus.push(new GatewayConnectedEvent(this));
 		
 		// try to find available bulbs
-		send(new LightStatusRequest());
+		refreshBulbs();
 	}
 	
 	public boolean isConnected() {
@@ -145,10 +151,21 @@ public class Gateway implements EventBusProvider {
 		return sendRaw(packet);
 	}
 	
+	/**
+	 * Returns a list of all bulbs connected to this gateway. The returned is
+	 * unmodifiable.
+	 * @return a list of known bulbs
+	 */
 	public List<Bulb> getBulbs() {
 		return Collections.unmodifiableList(bulbs);
 	}
 	
+	/**
+	 * Gets the bulb with the given MAC address, if any matching bulb exists. If
+	 * no such bulb can be found, {@code null} is returned.
+	 * @param address the address of the bulb to search for
+	 * @return the bulb with the given address, or {@code null}
+	 */
 	public Bulb getBulb(MACAddress address) {
 		for (Bulb b : bulbs) {
 			if (b.getAddress().getHex().equalsIgnoreCase(address.getHex())) {
@@ -157,6 +174,44 @@ public class Gateway implements EventBusProvider {
 		}
 		
 		return null;
+	}
+	
+	/**
+	 * Refreshes bulb state by issuing a {@link LightStatusRequest} to all bulbs
+	 * connected to this gateway. Note that this may trigger some number of
+	 * {@link GatewayBulbDiscoveredEvent}s for any new bulb discovered.
+	 * @throws IOException
+	 */
+	public void refreshBulbs() throws IOException {
+		send(new LightStatusRequest());
+	}
+	
+	/**
+	 * Sets the power state of all bulbs connected to this gateway. A
+	 * {@link SetPowerStateRequest} will be sent directly to the gateway.
+	 * @param state the power state to set
+	 * @throws IOException 
+	 */
+	public void setPowerState(PowerState state) throws IOException {
+		send(new SetPowerStateRequest(state));
+	}
+	
+	/**
+	 * Turns off all bulbs connected to this gateway.
+	 * @see #setPowerState(PowerState) 
+	 * @throws IOException 
+	 */
+	public void turnOff() throws IOException {
+		setPowerState(PowerState.OFF);
+	}
+	
+	/**
+	 * Turns on all bulbs connected to this gateway.
+	 * @see #setPowerState(PowerState) 
+	 * @throws IOException 
+	 */
+	public void turnOn() throws IOException {
+		setPowerState(PowerState.ON);
 	}
 	
 	@EventHandler

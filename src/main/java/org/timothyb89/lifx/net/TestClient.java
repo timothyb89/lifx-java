@@ -57,7 +57,7 @@ public class TestClient {
 		log.info("Bulb found: {}", event.getBulb());
 		Bulb b = event.getBulb();
 		
-		final Future<PacketResponse> resp = b.send(new SetPowerStateRequest(PowerState.ON))
+		final Future<PacketResponse> resp = b.send(new SetPowerStateRequest(PowerState.OFF))
 				.expect(PowerStateResponse.TYPE, b.getAddress());
 
 		new Thread(new Runnable() {
