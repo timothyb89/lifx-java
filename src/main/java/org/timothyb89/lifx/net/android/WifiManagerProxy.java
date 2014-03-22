@@ -42,13 +42,14 @@ public class WifiManagerProxy {
 		}
 	}
 	
-	public static WifiManagerProxy getInstance() {
+	public static WifiManagerProxy getInstance(Object androidContext) {
 		try {
 			Class c = Class.forName("android.content.Context");
 			String wifiServiceKey = (String) c.getField("WIFI_SERVICE").get(null);
 			Method getSystemService = c.getMethod("getSystemService", String.class);
 			
-			Object wifiManager = getSystemService.invoke(null, wifiServiceKey);
+			Object wifiManager = getSystemService.invoke(
+					androidContext, wifiServiceKey);
 			
 			return new WifiManagerProxy(wifiManager);
 		} catch (ClassNotFoundException ex) {

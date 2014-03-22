@@ -37,16 +37,24 @@ public class BroadcastListener implements EventBusProvider {
 	public static final int BROADCAST_PORT = 56700;
 	public static final int BROADCAST_DELAY = 1000;
 	
+	private Object androidContext;
+	
 	private EventBus bus;
 	
 	private DatagramChannel channel;
 	private Thread listenerThread;
 	private Thread broadcastThread;
 	
-	public BroadcastListener() {
+	public BroadcastListener(Object androidContext) {
+		this.androidContext = androidContext;
+		
 		bus = new EventBus() {{
 			add(GatewayDiscoveredEvent.class);
 		}};
+	}
+	
+	public BroadcastListener() {
+		this(null);
 	}
 	
 	@Override
@@ -56,7 +64,7 @@ public class BroadcastListener implements EventBusProvider {
 	
 	public void startListen(boolean daemon) throws IOException {
 		channel = DatagramChannel.open();
-		channel.bind(new InetSocketAddress(BROADCAST_PORT));
+		channel.socket().bind(new InetSocketAddress(BROADCAST_PORT));
 		channel.socket().setBroadcast(true);
 		channel.configureBlocking(true);
 		
@@ -156,7 +164,7 @@ public class BroadcastListener implements EventBusProvider {
 			// android requires a multicast lock, so we use a proxy class
 			// if the WifiManager is missing (i.e. not android) it does nothing
 			
-			WifiManagerProxy wifiManager = WifiManagerProxy.getInstance();
+			WifiManagerProxy wifiManager = WifiManagerProxy.getInstance(androidContext);
 			MulticastLockProxy lock = wifiManager.createMulticastLock(
 					getClass().getPackage().getName());
 			lock.acquire();
