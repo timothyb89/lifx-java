@@ -12,6 +12,7 @@ import org.timothyb89.lifx.gateway.GatewayPacketReceivedEvent;
 import org.timothyb89.lifx.gateway.PacketResponseFuture;
 import org.timothyb89.lifx.net.field.MACAddress;
 import org.timothyb89.lifx.net.packet.Packet;
+import org.timothyb89.lifx.net.packet.request.SetLightColorRequest;
 import org.timothyb89.lifx.net.packet.request.SetPowerStateRequest;
 import org.timothyb89.lifx.net.packet.response.LightStatusResponse;
 import org.timothyb89.lifx.net.packet.response.PowerStateResponse;
@@ -25,9 +26,7 @@ public class Bulb implements EventBusProvider {
 	
 	@Getter private Gateway gateway;
 	@Getter private MACAddress address;
-	@Getter private int hue;
-	@Getter private int saturation;
-	@Getter private int brightness;
+	@Getter private LIFXColor color;
 	@Getter private int dim;
 	@Getter private PowerState powerState;
 	@Getter private String label;
@@ -52,9 +51,7 @@ public class Bulb implements EventBusProvider {
 	}
 	
 	public void valuesFromPacket(LightStatusResponse packet) {
-		hue = packet.getHue();
-		saturation = packet.getSaturation();
-		brightness = packet.getBrightness();
+		color = new LIFXColor(packet);
 		dim = packet.getDim();
 		label = packet.getLabel();
 		tags = packet.getTags();
@@ -103,6 +100,27 @@ public class Bulb implements EventBusProvider {
 	 */
 	public void turnOn() throws IOException {
 		setPowerState(PowerState.ON);
+	}
+	
+	/**
+	 * Attempts to set the color of this bulb. 
+	 * @param color the color to set
+	 * @param fadeTime bulb fade time, appears to be in milliseconds,
+	 *     sometimes (??)
+	 * @throws IOException 
+	 */
+	public void setColor(LIFXColor color, long fadeTime) throws IOException {
+		send(new SetLightColorRequest(color, fadeTime));
+	}
+	
+	/**
+	 * Attempts to set the color of this bulb. A default 
+	 * @see #setColor(LIFXColor, long) 
+	 * @param color the color to set
+	 * @throws IOException 
+	 */
+	public void setColor(LIFXColor color) throws IOException {
+		setColor(color, 1000);
 	}
 	
 	@EventHandler

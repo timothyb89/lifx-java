@@ -3,6 +3,7 @@ package org.timothyb89.lifx.net.packet.request;
 import java.nio.ByteBuffer;
 import lombok.Getter;
 import lombok.Setter;
+import org.timothyb89.lifx.bulb.LIFXColor;
 import org.timothyb89.lifx.net.field.ByteField;
 import org.timothyb89.lifx.net.field.Field;
 import org.timothyb89.lifx.net.field.UInt16Field;
@@ -34,6 +35,27 @@ public class SetLightColorRequest extends Packet {
 
 	public SetLightColorRequest() {
 		stream = ByteBuffer.allocate(1);
+	}
+
+	public SetLightColorRequest(int hue, int saturation, int brightness, int kelvin, long fadeTime) {
+		this();
+		
+		this.hue = hue;
+		this.saturation = saturation;
+		this.brightness = brightness;
+		this.kelvin = kelvin;
+		this.fadeTime = fadeTime;
+	}
+	
+	public SetLightColorRequest(LIFXColor color, long fadeTime) {
+		this();
+		
+		this.fadeTime = fadeTime;
+		
+		hue = color.getHue();
+		saturation = color.getSaturation();
+		brightness = color.getValue();
+		kelvin = color.getKelvin();
 	}
 	
 	@Override

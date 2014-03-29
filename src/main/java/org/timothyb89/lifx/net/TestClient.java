@@ -5,6 +5,7 @@ import java.util.concurrent.Future;
 import lombok.extern.slf4j.Slf4j;
 import org.timothyb89.eventbus.EventHandler;
 import org.timothyb89.lifx.bulb.Bulb;
+import org.timothyb89.lifx.bulb.LIFXColor;
 import org.timothyb89.lifx.bulb.PowerState;
 import org.timothyb89.lifx.gateway.Gateway;
 import org.timothyb89.lifx.gateway.GatewayBulbDiscoveredEvent;
@@ -40,7 +41,7 @@ public class TestClient {
 		Gateway g = ev.getGateway();
 		g.bus().register(this);
 		
-		log.info("Got gateway: {}", ev.getGateway());
+		System.out.println("Got gateway: " + ev.getGateway());
 		
 		try {
 			g.connect();
@@ -54,25 +55,13 @@ public class TestClient {
 	
 	@EventHandler
 	public void bulbDiscovered(GatewayBulbDiscoveredEvent event) throws IOException {
-		log.info("Bulb found: {}", event.getBulb());
+		System.out.println("Bulb found: " + event.getBulb());
 		Bulb b = event.getBulb();
 		
-		final Future<PacketResponse> resp = b.send(new SetPowerStateRequest(PowerState.OFF))
-				.expect(PowerStateResponse.TYPE, b.getAddress());
-
-		new Thread(new Runnable() {
-
-			@Override
-			public void run() {
-				try {
-					PowerStateResponse state = resp.get().get(PowerStateResponse.class);
-					System.out.println("state is " + state);
-				} catch (Exception ex) {
-					
-				}
-			}
-			
-		}).start();
+		LIFXColor color = LIFXColor.fromRGB(127, 127, 0);
+		b.setColor(color);
+		
+		b.getGateway().disconnect();
 	}
 	
 	@EventHandler
