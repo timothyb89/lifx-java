@@ -1,19 +1,13 @@
 package org.timothyb89.lifx.net;
 
 import java.io.IOException;
-import java.util.concurrent.Future;
 import lombok.extern.slf4j.Slf4j;
 import org.timothyb89.eventbus.EventHandler;
 import org.timothyb89.lifx.bulb.Bulb;
 import org.timothyb89.lifx.bulb.LIFXColor;
-import org.timothyb89.lifx.bulb.PowerState;
 import org.timothyb89.lifx.gateway.Gateway;
 import org.timothyb89.lifx.gateway.GatewayBulbDiscoveredEvent;
 import org.timothyb89.lifx.gateway.GatewayPacketReceivedEvent;
-import org.timothyb89.lifx.gateway.PacketResponse;
-import org.timothyb89.lifx.net.packet.request.PowerStateRequest;
-import org.timothyb89.lifx.net.packet.request.SetPowerStateRequest;
-import org.timothyb89.lifx.net.packet.response.PowerStateResponse;
 
 /**
  *

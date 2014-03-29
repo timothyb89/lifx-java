@@ -1,7 +1,6 @@
 package org.timothyb89.lifx.net.field;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 /**
  * Reads a wrapped field in reversed byte order.
