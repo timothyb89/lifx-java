@@ -10,7 +10,7 @@ import org.timothyb89.eventbus.Event;
  */
 @Data
 @EqualsAndHashCode(callSuper = false)
-public class BulbPowerStateChangedEvent extends Event {
+public class BulbPowerStateUpdatedEvent extends Event {
 	
 	private final Bulb bulb;
 	private final PowerState powerState;

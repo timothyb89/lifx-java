@@ -24,15 +24,17 @@ import org.timothyb89.lifx.net.packet.response.PowerStateResponse;
 @ToString(of = { "label", "address", "powerState" })
 public class Bulb implements EventBusProvider {
 	
-	@Getter private Gateway gateway;
-	@Getter private MACAddress address;
+	public static final long DEFAULT_FADE_TIME = 1000l;
+	
+	@Getter private final Gateway gateway;
+	@Getter private final MACAddress address;
 	@Getter private LIFXColor color;
 	@Getter private int dim;
 	@Getter private PowerState powerState;
 	@Getter private String label;
 	@Getter private long tags;
 
-	private EventBus bus;
+	private final EventBus bus;
 	
 	public Bulb(Gateway gateway, MACAddress address) {
 		this.gateway = gateway;
@@ -41,6 +43,7 @@ public class Bulb implements EventBusProvider {
 		gateway.bus().register(this);
 		
 		bus = new EventBus() {{
+			add(BulbPowerStateUpdatedEvent.class);
 			add(BulbStatusUpdatedEvent.class);
 		}};
 	}
@@ -57,6 +60,15 @@ public class Bulb implements EventBusProvider {
 		tags = packet.getTags();
 		
 		powerState = packet.getPower();
+		
+		bus.push(new BulbStatusUpdatedEvent(
+				this, powerState, color, dim, label, tags));
+	}
+	
+	public void valuesFromPacket(PowerStateResponse packet) {
+		powerState = packet.getState();
+		
+		bus.push(new BulbPowerStateUpdatedEvent(this, powerState));
 	}
 	
 	/**
@@ -114,13 +126,14 @@ public class Bulb implements EventBusProvider {
 	}
 	
 	/**
-	 * Attempts to set the color of this bulb. A default 
+	 * Attempts to set the color of this bulb. A default fade time of
+	 * {@code 1000} is used.
 	 * @see #setColor(LIFXColor, long) 
 	 * @param color the color to set
 	 * @throws IOException 
 	 */
 	public void setColor(LIFXColor color) throws IOException {
-		setColor(color, 1000);
+		setColor(color, DEFAULT_FADE_TIME);
 	}
 	
 	@EventHandler
@@ -129,9 +142,10 @@ public class Bulb implements EventBusProvider {
 		
 		if (p instanceof PowerStateResponse) {
 			PowerStateResponse resp = (PowerStateResponse) p;
-			
+			valuesFromPacket(resp);
 		} else if (p instanceof LightStatusResponse) {
-			
+			LightStatusResponse resp = (LightStatusResponse) p;
+			valuesFromPacket(resp);
 		}
 		
 		// TODO implement events + updates
