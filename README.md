@@ -101,6 +101,7 @@ listed below, you can use:
 instance.bus().register(someObject);
 
 // someObject will be scanned for methods annotated with @EventHandler
+@EventHandler
 public void someEvent(SomeEventClass clazz) {
 	// do something
 }
