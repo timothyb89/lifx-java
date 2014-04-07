@@ -127,6 +127,7 @@ public void someEvent(SomeEventClass clazz) {
 
 * `BulbPowerStateUpdatedEvent`: called when a bulb is turned off or on
 * `BulbStatusUpdatedEvent`: called when some other bulb status is updated, e.g.
+  color, brightness, tags, etc
 
 Android support
 ---------------
