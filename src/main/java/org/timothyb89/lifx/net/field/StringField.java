@@ -12,11 +12,22 @@ public class StringField extends Field<String> {
 
 	public static final Charset CHARSET = StandardCharsets.US_ASCII;
 
+	private Charset charset;
+	
 	public StringField() {
+		charset = StandardCharsets.US_ASCII;
 	}
 	
 	public StringField(int length) {
 		super(length);
+		
+		charset = StandardCharsets.US_ASCII;
+	}
+
+	public StringField(int length, Charset charset) {
+		super(length);
+		
+		this.charset = charset;
 	}
 	
 	@Override
@@ -40,6 +51,16 @@ public class StringField extends Field<String> {
 	@Override
 	public ByteBuffer bytesInternal(String value) {
 		return CHARSET.encode(value);
+	}
+	
+	public StringField ascii() {
+		charset = StandardCharsets.US_ASCII;
+		return this;
+	}
+	
+	public StringField utf8() {
+		charset = StandardCharsets.UTF_8;
+		return this;
 	}
 	
 }
