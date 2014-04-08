@@ -1,24 +1,33 @@
 lifx-java
 =========
 
-A Java library for interacting with LIFX WiFi LED bulbs, targetting both desktop
-Java 7 and recent Android releases (4.4+, requires full JDK 7 support). Heavily
-inspired by and partially based on
-[lifxjs](https://github.com/magicmonkey/lifxjs).
+An unofficial Java library for interacting with LIFX WiFi LED bulbs, targetting both desktop
+Java 7 and recent Android releases (4.4+, requires full JDK 7 support). This library would not have been possible without the work of the
+[lifxjs project](https://github.com/magicmonkey/lifxjs).
 
 Current State
 -------------
 
-This library is not yet finished! Currently it supports gateway and bulb
-discovery, as well as basic bulb or gateway-level power control.
+This library isn't yet complete and may have unintended bugs. Currently API support exists for bulb discovery, power management (on / off), color changing, and event notifications. Most of the interesting [packet types](https://github.com/magicmonkey/lifxjs/blob/master/Protocol.md) have at least been defined and can be sent and received.
 
-Preliminary support for color changing has been added (see
-[SetLightColorRequest](https://github.com/timothyb89/lifx-java/blob/master/src/main/java/org/timothyb89/lifx/net/packet/request/SetLightColorRequest.java)),
-but this hasn't been properly exposed through a nice API yet.
+Some features still needing to be implemented:
+ * Tags (partially implemented)
+ * UDP events: many packets are sent out via UDP as well as TCP
+ * Network stability should be improved (automatic reconnect, etc)
+ * Remaining packet definitions
 
-Most events are working for gateways, however event processing for individual
-bulbs hasn't yet been implemented. This is the next major feature to be
-implemented.
+### Why use this?
+
+An [official Android API](https://github.com/LIFX/lifx-sdk-android) was released shortly after this library. There are some advantagse to using this library over the official SDK:
+ * A (subjectively) nicer API
+ * Desktop Java support
+ * Event support: get notified when a bulb turns off, changes color, etc
+ * Extra utilities: convert RGB -> HSBK, etc
+
+On the other hand, the official SDK:
+ * Presumably is more stable / better tested
+ * Has full tag support
+ * Is official
 
 Requirements
 ------------
