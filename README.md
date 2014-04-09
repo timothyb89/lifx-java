@@ -34,7 +34,8 @@ Requirements
 
 * JDK 7 or greater (NIO, etc)
 * Maven
-* [EventBus](https://github.com/timothyb89/EventBus)
+
+_[EventBus](https://github.com/timothyb89/EventBus) is now in Maven Central and does not need to be installed manually._
 
 Building
 --------
@@ -42,8 +43,6 @@ Building
 mvn install
 ```
 
-Note that [EventBus](https://github.com/timothyb89/EventBus) must be installed
-first (using the same procedure).
 
 Quickstart
 ----------
