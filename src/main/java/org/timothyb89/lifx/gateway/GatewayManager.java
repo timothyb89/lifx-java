@@ -3,6 +3,7 @@ package org.timothyb89.lifx.gateway;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.Getter;
 
 /**
  *
@@ -12,7 +13,7 @@ public class GatewayManager {
 	
 	private static GatewayManager instance;
 	
-	private final List<Gateway> gateways;
+	@Getter private final List<Gateway> gateways;
 	
 	private GatewayManager() {
 		gateways = new ArrayList<>();

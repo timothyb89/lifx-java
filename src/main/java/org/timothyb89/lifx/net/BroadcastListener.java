@@ -83,6 +83,10 @@ public class BroadcastListener implements EventBusProvider {
 		log.debug("Listening stopped");
 	}
 	
+	public boolean isListening() {
+		return channel != null && channel.isOpen();
+	}
+	
 	private final Runnable listener = new Runnable() {
 
 		@Override
