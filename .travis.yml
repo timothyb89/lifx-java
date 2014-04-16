@@ -10,6 +10,7 @@ env:
     - secure: "gWVhs5eggJrdQUu0CljYHixlA9M+FyTNxt+IPyRIoP22QFjJ4/QUS2BahcF0plSu8p3Wy+R/VIeNKYq5yHxbNsBynUdn6MJJ4J712EkL+FKq3+sTbx+zGeAMZWfAy8Xf9wh1Fgm1dyWxbOM0Cz9jwWWfY1Zdeh+wuNDdy6cbMB8="
 
 before_script:
+  - "gem install --version 0.8.0 faraday"
   - "gem install travis-artifacts"
 
 after_success:
