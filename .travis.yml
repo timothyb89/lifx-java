@@ -1,4 +1,16 @@
 language: java
 jdk:
   - oraclejdk7
-  - openjdk7
+
+env:
+  global:
+    - "ARTIFACTS_AWS_REGION=us-west-2"
+    - "ARTIFACTS_S3_BUCKET=lifx-java-artifacts"
+    - secure: "ie9AZCX9Euskxx6x9Gl5eiH9kgu7FPT+u+G0JDwTMEaBdRRO/vIXOTg9jkFjjlo7Ay9shdtD3liBaxC3Jn9xpOh4jSyGsv5GlZ11HVznMTeIC/Ic66+hTuy9hl+iugJDDBrzOwIav/aKHs4yK0Abw2/TyKgTvAzZVhGsYeJiH9M="
+    - secure: "gWVhs5eggJrdQUu0CljYHixlA9M+FyTNxt+IPyRIoP22QFjJ4/QUS2BahcF0plSu8p3Wy+R/VIeNKYq5yHxbNsBynUdn6MJJ4J712EkL+FKq3+sTbx+zGeAMZWfAy8Xf9wh1Fgm1dyWxbOM0Cz9jwWWfY1Zdeh+wuNDdy6cbMB8="
+
+before_script:
+  - "gem install travis-artifacts"
+
+after_success:
+  - "travis-artifacts upload --path target/lifx-java-*.jar --target-path artifacts/$TRAVIS_BUILD_ID/$TRAVIS_JOB_ID"
