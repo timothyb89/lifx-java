@@ -30,12 +30,56 @@ public class PacketFactory {
 	private final Map<Integer, PacketHandler> handlers;
 	
 	private PacketFactory() {
-		handlers = new HashMap<Integer, PacketHandler>() {{
-			//put(0x02, new IgnoreHandler());
-			//put(0x03, new PANGatewayResponseHandler());
-			put(PowerStateResponse.TYPE,  new PowerStateResponseHandler());
-			put(LightStatusResponse.TYPE, new LightStatusResponseHandler());
-		}};
+		handlers = new HashMap<>();
+		
+		register(PowerStateResponse.class);
+		register(LightStatusResponse.class);
+		register(BulbLabelResponse.class);
+		register(MeshFirmwareResponse.class);
+		register(TagLabelsResponse.class);
+		register(TagsResponse.class);
+		register(WifiInfoResponse.class);
+	}
+	
+	/**
+	 * Registers a packet handler for the given packet type.
+	 * @param type the type to register
+	 * @param handler the packet handler to associate with the type
+	 */
+	public final void register(int type, PacketHandler handler) {
+		handlers.put(type, handler);
+	}
+	
+	/**
+	 * Registers a new generic packet handler for the given packet class. The
+	 * packet class must meet the criteria for {@link GenericHandler};
+	 * specifically, it must have an no-argument constructor and require no
+	 * parsing logic outside of an invocation of
+	 * {@link Packet#parse(java.nio.ByteBuffer)}.
+	 * @param type the type of the packet to register
+	 * @param clazz the class of the packet to register
+	 */
+	public final void register(int type, Class<? extends Packet> clazz) {
+		handlers.put(type, new GenericHandler(clazz));
+	}
+	
+	/**
+	 * Registers a generic packet type. All requirements of
+	 * {@link GenericHandler} must met; specifically, classes must have a
+	 * no-args constructor and require no additional parsing logic.
+	 * Additionally, a public static integer {@code TYPE} field must be defined.
+	 * @param <T> the packet type to register
+	 * @param clazz the packet class to register
+	 */
+	public final <T extends Packet> void register(Class<T> clazz) {
+		GenericHandler<T> handler = new GenericHandler(clazz);
+		
+		if (!handler.isTypeFound()) {
+			throw new IllegalArgumentException(
+					"Unable to register generic packet with no TYPE field.");
+		}
+		
+		handlers.put(handler.getType(), handler);
 	}
 	
 	public PacketHandler getHandler(int packetType) {

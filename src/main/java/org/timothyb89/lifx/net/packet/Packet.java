@@ -8,7 +8,6 @@ import org.timothyb89.lifx.gateway.Gateway;
 import org.timothyb89.lifx.gateway.PacketResponseFuture;
 import org.timothyb89.lifx.net.field.ByteField;
 import org.timothyb89.lifx.net.field.Field;
-import org.timothyb89.lifx.net.field.LittleField;
 import org.timothyb89.lifx.net.field.MACAddress;
 import org.timothyb89.lifx.net.field.MACAddressField;
 import org.timothyb89.lifx.net.field.UInt16Field;
