@@ -11,14 +11,15 @@ Current State
 This library isn't yet complete and may have unintended bugs. Currently API support exists for bulb discovery, power management (on / off), color changing, and event notifications. Most of the interesting [packet types](https://github.com/magicmonkey/lifxjs/blob/master/Protocol.md) have at least been defined and can be sent and received.
 
 Some features still needing to be implemented:
- * Tags (partially implemented)
+ * Tags (partially implemented). Some work will need to be done to figure out exact specs of the format.
  * UDP events: many packets are sent out via UDP as well as TCP
+   * This would eliminate a lot of the need to maintain a constant TCP connection
  * Network stability should be improved (automatic reconnect, etc)
  * Remaining packet definitions
 
 ### Why use this?
 
-An [official Android API](https://github.com/LIFX/lifx-sdk-android) was released shortly after this library. There are some advantagse to using this library over the official SDK:
+An [official Android API](https://github.com/LIFX/lifx-sdk-android) was released shortly after this library. There are some advantages to using this library over the official SDK:
  * A (subjectively) nicer API
  * Desktop Java support
  * Event support: get notified when a bulb turns off, changes color, etc
