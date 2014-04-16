@@ -2,12 +2,17 @@ package org.timothyb89.lifx.net.packet;
 
 import java.util.HashMap;
 import java.util.Map;
-import org.timothyb89.lifx.net.packet.handler.LightStatusResponseHandler;
-import org.timothyb89.lifx.net.packet.handler.PacketHandler;
-import org.timothyb89.lifx.net.packet.handler.PowerStateResponseHandler;
+import org.timothyb89.lifx.net.packet.response.*;
+import org.timothyb89.lifx.net.packet.handler.*;
 
 /**
- *
+ * A static factory for registering packet types that may be received and
+ * dispatched to client code. Packet handlers (used to construct actual packet
+ * instances) may be retrieved via their packet type.
+ * 
+ * <p>This factory does not handle packet types used only for sending (most
+ * request types, like {@code PowerStateRequest}) or types received only via UDP
+ * (like {@code PANGatewayResponse}).</p>
  * @author tim
  */
 public class PacketFactory {
@@ -22,14 +27,14 @@ public class PacketFactory {
 		return instance;
 	}
 	
-	private Map<Integer, PacketHandler> handlers;
+	private final Map<Integer, PacketHandler> handlers;
 	
 	private PacketFactory() {
 		handlers = new HashMap<Integer, PacketHandler>() {{
 			//put(0x02, new IgnoreHandler());
 			//put(0x03, new PANGatewayResponseHandler());
-			put(0x16, new PowerStateResponseHandler());
-			put(0x6B, new LightStatusResponseHandler());
+			put(PowerStateResponse.TYPE,  new PowerStateResponseHandler());
+			put(LightStatusResponse.TYPE, new LightStatusResponseHandler());
 		}};
 	}
 	

@@ -18,22 +18,33 @@ import org.timothyb89.lifx.net.field.UInt64Field;
  * Represents an abstract packet, providing conversion functionality to and from
  * {@link ByteBuffer}s for common packet (preamble) fields. Subtypes of this
  * class can provide conversion functionality for specialized fields.
+ * 
+ * <p>Defining new packet types essentially involves extending this class,
+ * defining the fields and implementing {@link #packetType()},
+ * {@link #packetLength()}, and {@link #packetBytes()}. By convention, packet
+ * type should be stored in a {@code public static final int PACKET_TYPE} field
+ * in each subtype, followed by a listing of fields contained in the packet.
+ * Field definitions should remain accessible to outside classes in the event
+ * they need to worked with directly elsewhere.</p>
  * @author tim
  */
 @ToString(of = { "packetType", "size", "bulbAddress" })
 public abstract class Packet {
 
-	public static final Field<Integer>    FIELD_SIZE         = new LittleField(new UInt16Field());
-	public static final Field<Integer>    FIELD_PROTOCOL     = new LittleField(new UInt16Field());
+	public static final Field<Integer>    FIELD_SIZE         = new UInt16Field().little();
+	public static final Field<Integer>    FIELD_PROTOCOL     = new UInt16Field().little();
 	public static final Field<ByteBuffer> FIELD_RESERVED_1   = new ByteField(4);
 	public static final Field<MACAddress> FIELD_BULB_ADDRESS = new MACAddressField();
 	public static final Field<ByteBuffer> FIELD_RESERVED_2   = new ByteField(2);
 	public static final Field<MACAddress> FIELD_SITE         = new MACAddressField();
 	public static final Field<ByteBuffer> FIELD_RESERVED_3   = new ByteField(2);
 	public static final Field<Long>       FIELD_TIMESTAMP    = new UInt64Field();
-	public static final Field<Integer>    FIELD_PACKET_TYPE  = new LittleField(new UInt16Field());
+	public static final Field<Integer>    FIELD_PACKET_TYPE  = new UInt16Field().little();
 	public static final Field<ByteBuffer> FIELD_RESERVED_4   = new ByteField(2);
 	
+	/**
+	 * An ordered array of all fields contained in the common packet preamble.
+	 */
 	public static final Field[] PREAMBLE_FIELDS = new Field[] {
 		FIELD_SIZE,
 		FIELD_PROTOCOL,
@@ -58,10 +69,20 @@ public abstract class Packet {
 	@Getter protected int packetType;
 	@Getter protected ByteBuffer reserved4;
 	
+	/**
+	 * Creates an empty packet, setting some default values via
+	 * {@link #preambleDefaults()}.
+	 */
 	public Packet() {
 		preambleDefaults();
 	}
 	
+	/**
+	 * Parses, in order, the defined preamble fields, storing collected values.
+	 * The buffer's position will be left at the end of the parsed fields and
+	 * should be equal to the value returned by {@link #preambleLength()}.
+	 * @param bytes the buffer to read from.
+	 */
 	protected void parsePreamble(ByteBuffer bytes) {
 		size        = FIELD_SIZE        .value(bytes);
 		protocol    = FIELD_PROTOCOL    .value(bytes);
@@ -75,6 +96,11 @@ public abstract class Packet {
 		reserved4   = FIELD_RESERVED_4  .value(bytes);
 	}
 	
+	/**
+	 * Calculates the length of the packet header, defined as the sum of the
+	 * lengths of all defined fields (see {@link #PREAMBLE_FIELDS}).
+	 * @return the sum of the length of preamble fields
+	 */
 	protected int preambleLength() {
 		int sum = 0;
 		
@@ -85,6 +111,24 @@ public abstract class Packet {
 		return sum;
 	}
 	
+	/**
+	 * Returns a new {@code ByteBuffer} containing the encoded preamble. Note
+	 * that the returned buffer will have its position set at the end of the
+	 * buffer and will need to have {@link ByteBuffer#rewind()} called before
+	 * use.
+	 * 
+	 * <p>The length of the buffer is the sum of the lengths of the defined
+	 * preamble fields (see {@link #PREAMBLE_FIELDS} for an ordered list), which
+	 * may also be accessed via {@link #preambleLength()}.</p>
+	 * 
+	 * <p>Certain fields are set to default values based on other class methods.
+	 * For example, the size and packet type fields will be set to the values
+	 * returned from {@link #length()} and {@link #packetType()}, respectively.
+	 * Other defaults (such as the protocol, bulb address, site, and timestamp)
+	 * may be specified either by directly setting the relevant protected
+	 * variables or by overriding {@link #preambleDefaults()}.
+	 * @return a new buffer containing the encoded preamble
+	 */
 	protected ByteBuffer preambleBytes() {
 		return ByteBuffer.allocate(preambleLength())
 				.put(FIELD_SIZE.bytes(length()))
@@ -93,7 +137,7 @@ public abstract class Packet {
 				.put(FIELD_BULB_ADDRESS.bytes(bulbAddress))
 				.put(ByteBuffer.allocate(FIELD_RESERVED_2.getLength()))  // empty
 				.put(FIELD_SITE.bytes(site))
-				.put(ByteBuffer.allocate(FIELD_RESERVED_3.getLength())) // empty
+				.put(ByteBuffer.allocate(FIELD_RESERVED_3.getLength()))  // empty
 				.put(FIELD_TIMESTAMP.bytes(timestamp))
 				.put(FIELD_PACKET_TYPE.bytes(packetType()))
 				.put(ByteBuffer.allocate(FIELD_RESERVED_4.getLength())); // empty
@@ -188,7 +232,10 @@ public abstract class Packet {
 	protected abstract ByteBuffer packetBytes();
 	
 	/**
-	 * Gets the total length of this packet, in bytes.
+	 * Gets the total length of this packet, in bytes. Specifically, this method
+	 * is the sum of the preamble ({@link #preambleLength()}) and the payload
+	 * length ({@link #packetLength()}); subtypes should override methods for
+	 * those values if desired.
 	 * @return the total length of this packet
 	 */
 	public int length() {
@@ -205,6 +252,12 @@ public abstract class Packet {
 	 * <p>Note that optional response packets, or responses sent over UDP,
 	 * should not be listed here. Any instance where an optional packet is not
 	 * received will prevent other futures from being fulfilled.</p>
+	 * 
+	 * <p>When providing values here, note that {@link Gateway} will always wait
+	 * for all of the defined response types to be fulfilled. If a response
+	 * isn't guaranteed it's probably best to leave it out; clients may add
+	 * expected response types to {@link PacketResponseFuture} on an individual
+	 * basis.</p>
 	 * 
 	 * @return a list of expected responses
 	 */
