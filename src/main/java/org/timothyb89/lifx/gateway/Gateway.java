@@ -76,7 +76,7 @@ public class Gateway implements EventBusProvider {
 	}
 	
 	/**
-	 * Attempts to establish a connection to this gateway.
+	 * Attempts to establish a TCP connection to this gateway.
 	 * @throws IOException 
 	 */
 	public void connect() throws IOException {
@@ -125,7 +125,7 @@ public class Gateway implements EventBusProvider {
 		
 		channel.write(packet.bytes());
 		
-		bus.push(new GatewayPacketSentEvent(packet, f));
+		bus.push(new GatewayPacketSentEvent(this, packet, f));
 		
 		return f;
 	}
@@ -286,7 +286,8 @@ public class Gateway implements EventBusProvider {
 						continue;
 					}
 					
-					bus.push(new GatewayPacketReceivedEvent(packet));
+					bus.push(new GatewayPacketReceivedEvent(
+							Gateway.this, packet));
 					
 					// clean up fulfilled (empty) response futures
 					List<PacketResponseFuture> toRemove = new LinkedList<>();

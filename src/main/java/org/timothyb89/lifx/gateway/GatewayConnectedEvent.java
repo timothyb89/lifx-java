@@ -5,7 +5,7 @@ import lombok.EqualsAndHashCode;
 import org.timothyb89.eventbus.Event;
 
 /**
- *
+ * An event dispatched when a TCP connection to a gateway has been established.
  * @author tim
  */
 @Data

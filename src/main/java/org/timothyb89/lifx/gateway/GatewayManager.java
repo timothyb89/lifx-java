@@ -6,7 +6,7 @@ import java.util.List;
 import lombok.Getter;
 
 /**
- *
+ * Manages the global list of known gateways.
  * @author tim
  */
 public class GatewayManager {

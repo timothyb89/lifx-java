@@ -1,10 +1,7 @@
 package org.timothyb89.lifx.gateway;
 
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import lombok.Data;
 import org.timothyb89.lifx.net.field.MACAddress;
 import org.timothyb89.lifx.net.packet.Packet;

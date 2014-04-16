@@ -10,7 +10,11 @@ import org.timothyb89.lifx.net.field.MACAddress;
 import org.timothyb89.lifx.net.packet.Packet;
 
 /**
- *
+ * Provides asynchronous packet response functionality. Sent packets return
+ * instances of this class that can be configured to expect certain response
+ * packets. Responses may be specified directly in packet type definitions
+ * ({@link Packet#expectedResponses()}) or via the {@link #expect(int)} method
+ * in this class.
  * @author tim
  */
 public class PacketResponseFuture implements Future<PacketResponse> {
@@ -87,14 +91,33 @@ public class PacketResponseFuture implements Future<PacketResponse> {
 		return response;
 	}
 	
+	/**
+	 * Checks if a response of the given type is still expected. Previously
+	 * expected packets that have already been received will not be considered
+	 * "expected".
+	 * @param packetType the type to check
+	 * @return true if a response of the given type is still expected
+	 */
 	public boolean expectsResponse(int packetType) {
 		return response.isExpecting(packetType);
 	}
 	
+	/**
+	 * Checks if a response of the given type and from the given address is
+	 * still expected. Fulfilled responses are not considered "expected".
+	 * @param packetType the packet type to expect
+	 * @param address the bulb address to expect a packet from
+	 * @return true if a matching response is still expected, false otherwise
+	 */
 	public boolean expectsResponse(int packetType, MACAddress address) {
 		return response.isExpecting(packetType, address);
 	}
 	
+	/**
+	 * Adds the given packet as a fulfilled response. If no packet of the given
+	 * type is expected, an {@link IllegalArgumentException} will be thrown.
+	 * @param packet the packet to set as fulfilled
+	 */
 	public void putResponse(Packet packet) {
 		response.addResponse(packet);
 		
@@ -103,6 +126,11 @@ public class PacketResponseFuture implements Future<PacketResponse> {
 		}
 	}
 	
+	/**
+	 * Determines if this future has been fulfilled. Specifically, this checks
+	 * that all expected packet types have been received.
+	 * @return true if all expected packets have been received; false otherwise
+	 */
 	public boolean isFulfilled() {
 		return response.isFulfilled();
 	}
