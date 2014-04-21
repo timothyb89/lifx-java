@@ -7,7 +7,8 @@ import org.timothyb89.lifx.net.packet.handler.*;
 
 /**
  * A static factory for registering packet types that may be received and
- * dispatched to client code. Packet handlers (used to construct actual packet
+ * dispatched to client cod * request types, like {@code PowerStateRequest}) or types received only via UDP
+e. Packet handlers (used to construct actual packet
  * instances) may be retrieved via their packet type.
  * 
  * <p>This factory does not handle packet types used only for sending (most
@@ -82,6 +83,12 @@ public class PacketFactory {
 		handlers.put(handler.getType(), handler);
 	}
 	
+	/**
+	 * Gets a registered handler for the given packet type, if any exists. If
+	 * no matching handler can be found, {@code null} is returned.
+	 * @param packetType the packet type of the handler to retrieve
+	 * @return a packet handler, or null
+	 */
 	public PacketHandler getHandler(int packetType) {
 		return handlers.get(packetType);
 	}

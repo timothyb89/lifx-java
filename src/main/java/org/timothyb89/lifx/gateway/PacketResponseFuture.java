@@ -61,7 +61,7 @@ public class PacketResponseFuture implements Future<PacketResponse> {
 	public PacketResponse get() throws InterruptedException, ExecutionException {
 		if (cachedValue == null) {
 			if (response.isFulfilled()) {
-				// self-fulfil if we're not expecting anything
+				// self-fulfill if we're not expecting anything
 				// (avoid blocking)
 				cachedValue = response;
 			} else {

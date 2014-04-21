@@ -7,7 +7,9 @@ import lombok.ToString;
 import org.timothyb89.lifx.net.packet.response.LightStatusResponse;
 
 /**
- *
+ * A basic implementation of a color in the HSVK space, compatible with LIFX
+ * bulbs. This implementation uses colors ranging from {@link #MIN_VALUE}
+ * (0x0000) to {@link #MAX_VALUE} (0xFFFF)
  * @author tim
  */
 @ToString
@@ -23,9 +25,16 @@ public class LIFXColor {
 	@Getter private int value;
 	@Getter private int kelvin;
 
+	/**
+	 * Creates a new LIFXColor with unspecified values.
+	 */
 	public LIFXColor() {
 	}
-
+	
+	/**
+	 * Creates a new LIFXColor using values from the given light status packet.
+	 * @param packet the packet to copy values from
+	 */
 	public LIFXColor(LightStatusResponse packet) {
 		hue = packet.getHue();
 		saturation = packet.getSaturation();
@@ -33,6 +42,13 @@ public class LIFXColor {
 		kelvin = packet.getKelvin();
 	}
 	
+	/**
+	 * Creates a new LIFXColor using the specified values.
+	 * @param hue the hue of the color
+	 * @param saturation the saturation of the color
+	 * @param value the 
+	 * @param kelvin 
+	 */
 	public LIFXColor(int hue, int saturation, int value, int kelvin) {
 		this.hue = hue;
 		this.saturation = saturation;
@@ -40,27 +56,50 @@ public class LIFXColor {
 		this.kelvin = kelvin;
 	}
 	
+	/**
+	 * Returns a new LIFXColor with the given hue value, copying other
+	 * parameters from this instance.
+	 * @param hue the hue value to use
+	 * @return a copy of this color with the given hue parameter
+	 */
 	public LIFXColor hue(int hue) {
 		return new LIFXColor(hue, this.saturation, this.value, this.kelvin);
 	}
 	
+	/**
+	 * Returns a new LIFXColor with the given saturation value, copying other
+	 * parameters from this instance.
+	 * @param saturation the saturation value to use
+	 * @return a copy of this color with the given saturation parameter
+	 */
 	public LIFXColor saturation(int saturation) {
 		return new LIFXColor(this.hue, saturation, this.value, this.kelvin);
 	}
 	
+	/**
+	 * Returns a new LIFXColor with the given {@code value} parameter, copying
+	 * other fields from this instance.
+	 * @param value the value parameter to use
+	 * @return a copy of this color with the given value parameter
+	 */
 	public LIFXColor value(int value) {
 		return new LIFXColor(this.hue, this.saturation, value, this.kelvin);
 	}
 	
+	/**
+	 * Returns a new LIFXColor with the given kelvin value, copying other
+	 * parameters from this instance.
+	 * @param kelvin the kelvin value to use
+	 * @return a copy of this color with the given kelvin parameter
+	 */
 	public LIFXColor kelvin(int kelvin) {
 		return new LIFXColor(this.hue, this.saturation, this.value, kelvin);
 	}
 	
-	//public void setRGB(int red )
-	
 	/**
 	 * Creates a new LIFXColor in the HSV space from the given red/green/blue
 	 * values. Note that values should fall in the range of 0...255 (inclusive).
+	 * The kelvin will be a default of {@link #DEFAULT_KELVIN}.
 	 * @param red the red component of the color
 	 * @param green the green component of the color
 	 * @param blue the blue component of the color
@@ -108,12 +147,6 @@ public class LIFXColor {
 				(int) (saturation * MAX_VALUE),
 				(int) (value * MAX_VALUE),
 				DEFAULT_KELVIN);
-	}
-	
-	public static void main(String[] args) {
-		System.out.println("red:   " + fromRGB(255, 0, 0));
-		System.out.println("green: " + fromRGB(0, 255, 0));
-		System.out.println("blue:  " + fromRGB(0, 0, 255));
 	}
 	
 }

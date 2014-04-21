@@ -18,7 +18,12 @@ import org.timothyb89.lifx.net.packet.request.PANGatewayRequest;
 import org.timothyb89.lifx.net.packet.response.PANGatewayResponse;
 
 /**
- * Listens for UDP broadcasts from gateway bulbs.
+ * Listens for UDP broadcasts from gateway bulbs. Listening and broadcasting
+ * can be started with {@link #startListen()}, and then events of type
+ * {@link GatewayDiscoveredEvent} will be emitted as gateways are discovered.
+ * <p>Currently only gateway discovery is performed over UDP; however, a number
+ * of events are sent over UDP in addition to TCP. In the future these may be
+ * handled to remove some of the need for maintaining a TCP connection.</p>
  * @author tim
  */
 @Slf4j
@@ -35,6 +40,11 @@ public class BroadcastListener implements EventBusProvider {
 	private Thread listenerThread;
 	private Thread broadcastThread;
 	
+	/**
+	 * Creates a new BroadcastListener using the given android context. If the
+	 * platform is not android, this context may be left {@code null}.
+	 * @param androidContext the current Android context, or null
+	 */
 	public BroadcastListener(Object androidContext) {
 		this.androidContext = androidContext;
 		
@@ -43,6 +53,11 @@ public class BroadcastListener implements EventBusProvider {
 		}};
 	}
 	
+	/**
+	 * Creates a new BroadcastListener. If using android, an android context
+	 * must be provided to enable multicast; see
+	 * {@link #BroadcastListener(java.lang.Object)}.
+	 */
 	public BroadcastListener() {
 		this(null);
 	}
@@ -52,6 +67,12 @@ public class BroadcastListener implements EventBusProvider {
 		return bus.getClient();
 	}
 	
+	/**
+	 * Begins listening for UDP broadcasts on {@link #BROADCAST_PORT}.
+	 * @param daemon if true, threads are spawned in daemon mode and will allow
+	 *     program termination with the main thread
+	 * @throws IOException 
+	 */
 	public void startListen(boolean daemon) throws IOException {
 		channel = DatagramChannel.open();
 		channel.socket().bind(new InetSocketAddress(BROADCAST_PORT));
@@ -69,10 +90,20 @@ public class BroadcastListener implements EventBusProvider {
 		log.debug("Started listening on port " + BROADCAST_PORT);
 	}
 	
+	/**
+	 * Begins listening for UDP broadcasts on {@link #BROADCAST_PORT}. By
+	 * default, listening threads are not spawned in daemon mode; see
+	 * {@link #startListen(boolean)} to configure this.
+	 * @throws IOException 
+	 */
 	public void startListen() throws IOException {
 		startListen(false);
 	}
 	
+	/**
+	 * Closes the UDP channel and stops listening and broadcast threads.
+	 * @throws IOException 
+	 */
 	public void stopListen() throws IOException {
 		if (listenerThread == null) {
 			return;
@@ -83,6 +114,10 @@ public class BroadcastListener implements EventBusProvider {
 		log.debug("Listening stopped");
 	}
 	
+	/**
+	 * Returns true currently listening for UDP packets
+	 * @return true if listening, false if not
+	 */
 	public boolean isListening() {
 		return channel != null && channel.isOpen();
 	}
@@ -180,19 +215,5 @@ public class BroadcastListener implements EventBusProvider {
 		}
 		
 	};
-	
-	public static void main(String[] args) throws InterruptedException, IOException {
-		
-		BroadcastListener l = new BroadcastListener();
-		l.startListen();
-		
-		System.out.println("listening...");
-		
-		Thread.sleep(10000);
-		
-		l.stopListen();
-		
-		System.out.println("killed");
-	}
 	
 }
