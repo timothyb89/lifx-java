@@ -47,6 +47,7 @@ public class Gateway implements EventBusProvider {
 	
 	private SocketChannel channel;
 	private Thread listenerThread;
+	private volatile boolean connected;
 	
 	private List<Bulb> bulbs;
 
@@ -93,7 +94,11 @@ public class Gateway implements EventBusProvider {
 	}
 	
 	public boolean isConnected() {
-		return channel != null && channel.isConnected();
+		//return channel != null && channel.isConnected();
+		// apparently channel.isConnected() does not actually tell you if the
+		// socket is connected - at least on android
+		// we do get usable EOFs, so we'll keep track ourselves
+		return connected;
 	}
 	
 	public void disconnect() {
@@ -238,6 +243,8 @@ public class Gateway implements EventBusProvider {
 
 		@Override
 		public void run() {
+			connected = true;
+			
 			while (true) {
 				try {
 					ByteBuffer sizeBuffer = ByteBuffer.allocate(2);
@@ -327,6 +334,8 @@ public class Gateway implements EventBusProvider {
 					log.error("Error reading packet", ex);
 				}
 			}
+			
+			connected = false;
 			
 			bus.push(new GatewayDisconnectedEvent(Gateway.this));
 		}
