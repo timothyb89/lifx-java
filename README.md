@@ -141,14 +141,18 @@ public void someEvent(SomeEventClass clazz) {
 Android support
 ---------------
 
-The library will attempt to discover and create
+This library will happily work on Android or on normal JVMs, and is also being
+used in the [lifx-tasker](https://github.com/timothyb89/lifx-tasker) project.
+However, it takes advantage of Java 7 features and will require Android 4.4 or
+higher to run.
+
+Specifically, it will attempt to discover and create
 [MulticastLocks](http://developer.android.com/reference/android/net/wifi/WifiManager.MulticastLock.html),
 which are required to receive multicast packets on Android devices. However, no
 binary dependency is created on any Android APIs, so the library can still be
-used on desktop JREs without any trouble.
-
-This feature was unabashedly stolen (with some adaptions) from
-[AndroidLIFX](https://github.com/akrs/AndroidLIFX).
+used on normal JVMs without any trouble. (This feature was unabashedly
+ stolen (with some adaptions) from
+[AndroidLIFX](https://github.com/akrs/AndroidLIFX).)
 
 Also note that you'll need the
 [slf4j android plugin](http://www.slf4j.org/android/) to get log messages.
