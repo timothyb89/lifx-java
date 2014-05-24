@@ -74,6 +74,13 @@ public class BroadcastListener implements EventBusProvider {
 	 * @throws IOException 
 	 */
 	public void startListen(boolean daemon) throws IOException {
+		if (isListening() ||
+				(listenerThread != null && listenerThread.isAlive())) {
+			log.debug("Attempted to spawn multiple listener threads,"
+					+ " ignoring...");
+			return;
+		}
+		
 		channel = DatagramChannel.open();
 		channel.socket().bind(new InetSocketAddress(BROADCAST_PORT));
 		channel.socket().setBroadcast(true);
@@ -202,12 +209,16 @@ public class BroadcastListener implements EventBusProvider {
 				try {
 					channel.send(r.bytes(), a);
 					log.debug("discovery packet sent");
-					
-					Thread.sleep(BROADCAST_DELAY);
-				} catch (ClosedChannelException | InterruptedException ex) {
+				} catch (ClosedChannelException ex) {
 					break;
 				} catch (Exception ex) {
 					log.error("Error sending discovery packet", ex);
+				}
+				
+				try {
+					Thread.sleep(BROADCAST_DELAY);
+				} catch (InterruptedException ex) {
+					break;
 				}
 			}
 			
