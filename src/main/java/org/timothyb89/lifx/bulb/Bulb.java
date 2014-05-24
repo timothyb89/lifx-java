@@ -140,6 +140,11 @@ public class Bulb implements EventBusProvider {
 	public void packetReceived(GatewayPacketReceivedEvent event) {
 		Packet p = event.getPacket();
 		
+		// make sure the packet is for this bulb
+		if (!p.getBulbAddress().equals(address)) {
+			return;
+		}
+		
 		if (p instanceof PowerStateResponse) {
 			PowerStateResponse resp = (PowerStateResponse) p;
 			valuesFromPacket(resp);
