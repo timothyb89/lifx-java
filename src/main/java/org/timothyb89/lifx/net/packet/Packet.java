@@ -60,7 +60,7 @@ public abstract class Packet {
 	@Getter protected int size;
 	@Getter protected int protocol;
 	@Getter protected ByteBuffer reserved1;
-	@Getter protected MACAddress bulbAddress;
+	@Getter @Setter protected MACAddress bulbAddress;
 	@Getter protected ByteBuffer reserved2;
 	@Getter @Setter protected MACAddress site;
 	@Getter protected ByteBuffer reserved3;
@@ -159,7 +159,7 @@ public abstract class Packet {
 	
 	/**
 	 * Returns the packet type. Note that this value is technically distinct
-	 * from {@link #getPacketType()} in that it returns the packet type the
+	 * from {@code getPacketType()} in that it returns the packet type the
 	 * current {@code Packet} subtype is designed to parse, while
 	 * {@code getPacketType()} returns the actual {@code packetType} field of
 	 * a parsed packet. However, these values should always match.

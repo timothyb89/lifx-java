@@ -2,7 +2,6 @@ package org.timothyb89.lifx.bulb;
 
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.ToString;
 import org.timothyb89.lifx.net.packet.response.LightStatusResponse;
 
@@ -46,8 +45,9 @@ public class LIFXColor {
 	 * Creates a new LIFXColor using the specified values.
 	 * @param hue the hue of the color
 	 * @param saturation the saturation of the color
-	 * @param value the 
-	 * @param kelvin 
+	 * @param value The the `value` parameter for the HSVK color
+	 * @param kelvin The kelvin value for the HSVK color. See
+	 *     {@link #DEFAULT_KELVIN}.
 	 */
 	public LIFXColor(int hue, int saturation, int value, int kelvin) {
 		this.hue = hue;

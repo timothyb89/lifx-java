@@ -76,11 +76,12 @@ public class Bulb implements EventBusProvider {
 	 * to the address of this bulb. See {@link Gateway#send(Packet)} for more
 	 * information on this behavior.
 	 * @param packet the packet to send
-	 * @throws IOException
+	 * @throws IOException on network error
 	 * @return a {@link PacketResponseFuture}
 	 */
 	public PacketResponseFuture send(Packet packet) throws IOException {
-		packet.setSite(address);
+		packet.setBulbAddress(address);
+		packet.setSite(gateway.getMacAddress());
 		return gateway.sendRaw(packet);
 	}
 	
@@ -90,7 +91,7 @@ public class Bulb implements EventBusProvider {
 	 * immediately; a {@link PowerStateResponse} or a
 	 * {@link LightStatusResponse} must be received first.
 	 * @param state the new state to set
-	 * @throws java.io.IOException
+	 * @throws IOException on network error
 	 */
 	public void setPowerState(PowerState state) throws IOException {
 		send(new SetPowerStateRequest(state));
@@ -99,7 +100,7 @@ public class Bulb implements EventBusProvider {
 	/**
 	 * Turns off this bulb.
 	 * @see #setPowerState(PowerState) 
-	 * @throws java.io.IOException
+	 * @throws IOException on network error
 	 */
 	public void turnOff() throws IOException {
 		setPowerState(PowerState.OFF);
@@ -108,7 +109,7 @@ public class Bulb implements EventBusProvider {
 	/**
 	 * Turns on this bulb.
 	 * @see #setPowerState(PowerState) 
-	 * @throws IOException 
+	 * @throws IOException on network error
 	 */
 	public void turnOn() throws IOException {
 		setPowerState(PowerState.ON);
@@ -119,7 +120,7 @@ public class Bulb implements EventBusProvider {
 	 * @param color the color to set
 	 * @param fadeTime bulb fade time, appears to be in milliseconds,
 	 *     sometimes (??)
-	 * @throws IOException 
+	 * @throws IOException on network error
 	 */
 	public void setColor(LIFXColor color, long fadeTime) throws IOException {
 		send(new SetLightColorRequest(color, fadeTime));
@@ -130,7 +131,7 @@ public class Bulb implements EventBusProvider {
 	 * {@code 1000} is used.
 	 * @see #setColor(LIFXColor, long) 
 	 * @param color the color to set
-	 * @throws IOException 
+	 * @throws IOException on network error
 	 */
 	public void setColor(LIFXColor color) throws IOException {
 		setColor(color, DEFAULT_FADE_TIME);

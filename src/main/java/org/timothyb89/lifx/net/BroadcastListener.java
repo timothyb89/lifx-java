@@ -71,7 +71,7 @@ public class BroadcastListener implements EventBusProvider {
 	 * Begins listening for UDP broadcasts on {@link #BROADCAST_PORT}.
 	 * @param daemon if true, threads are spawned in daemon mode and will allow
 	 *     program termination with the main thread
-	 * @throws IOException 
+	 * @throws IOException on network error
 	 */
 	public void startListen(boolean daemon) throws IOException {
 		if (isListening() ||
@@ -101,7 +101,7 @@ public class BroadcastListener implements EventBusProvider {
 	 * Begins listening for UDP broadcasts on {@link #BROADCAST_PORT}. By
 	 * default, listening threads are not spawned in daemon mode; see
 	 * {@link #startListen(boolean)} to configure this.
-	 * @throws IOException 
+	 * @throws IOException on network error
 	 */
 	public void startListen() throws IOException {
 		startListen(false);
@@ -109,7 +109,7 @@ public class BroadcastListener implements EventBusProvider {
 	
 	/**
 	 * Closes the UDP channel and stops listening and broadcast threads.
-	 * @throws IOException 
+	 * @throws IOException on network error
 	 */
 	public void stopListen() throws IOException {
 		if (listenerThread == null) {

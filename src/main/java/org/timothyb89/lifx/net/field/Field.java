@@ -31,7 +31,8 @@ public abstract class Field<T> {
 	
 	/**
 	 * Returns a default field length. Client classes should always use
-	 * {@link #getLength()} to get the actual field length.
+	 * the {@code length} field (via {@code getLength()} to get the actual field
+	 * length.
 	 * @return the default length of this field to use if none is specified
 	 */
 	public abstract int defaultLength();

@@ -78,7 +78,7 @@ public class Gateway implements EventBusProvider {
 	
 	/**
 	 * Attempts to establish a TCP connection to this gateway.
-	 * @throws IOException 
+	 * @throws IOException on network error
 	 */
 	public void connect() throws IOException {
 		channel = SocketChannel.open();
@@ -122,7 +122,7 @@ public class Gateway implements EventBusProvider {
 	 * are not guaranteed.</p>
 	 * @param packet the packet to send
 	 * @return a Future containing any packet responses
-	 * @throws IOException 
+	 * @throws IOException on network error
 	 */
 	public PacketResponseFuture sendRaw(Packet packet) throws IOException {
 		PacketResponseFuture f = new PacketResponseFuture(packet);
@@ -149,7 +149,7 @@ public class Gateway implements EventBusProvider {
 	 * @see #sendRaw(Packet)
 	 * @param packet the packet to send
 	 * @return a Future containing any packet responses
-	 * @throws IOException 
+	 * @throws IOException on network error
 	 */
 	public Future<PacketResponse> send(Packet packet) throws IOException {
 		packet.setSite(macAddress);
@@ -185,7 +185,7 @@ public class Gateway implements EventBusProvider {
 	 * Refreshes bulb state by issuing a {@link LightStatusRequest} to all bulbs
 	 * connected to this gateway. Note that this may trigger some number of
 	 * {@link GatewayBulbDiscoveredEvent}s for any new bulb discovered.
-	 * @throws IOException
+	 * @throws IOException on network error
 	 */
 	public void refreshBulbs() throws IOException {
 		send(new LightStatusRequest());
@@ -195,7 +195,7 @@ public class Gateway implements EventBusProvider {
 	 * Sets the power state of all bulbs connected to this gateway. A
 	 * {@link SetPowerStateRequest} will be sent directly to the gateway.
 	 * @param state the power state to set
-	 * @throws IOException 
+	 * @throws IOException on network error
 	 */
 	public void setPowerState(PowerState state) throws IOException {
 		send(new SetPowerStateRequest(state));
@@ -204,7 +204,7 @@ public class Gateway implements EventBusProvider {
 	/**
 	 * Turns off all bulbs connected to this gateway.
 	 * @see #setPowerState(PowerState) 
-	 * @throws IOException 
+	 * @throws IOException on network error
 	 */
 	public void turnOff() throws IOException {
 		setPowerState(PowerState.OFF);
@@ -213,7 +213,7 @@ public class Gateway implements EventBusProvider {
 	/**
 	 * Turns on all bulbs connected to this gateway.
 	 * @see #setPowerState(PowerState) 
-	 * @throws IOException 
+	 * @throws IOException on network error
 	 */
 	public void turnOn() throws IOException {
 		setPowerState(PowerState.ON);

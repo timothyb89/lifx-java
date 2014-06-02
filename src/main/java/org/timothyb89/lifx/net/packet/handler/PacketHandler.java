@@ -7,7 +7,7 @@ import org.timothyb89.lifx.net.packet.Packet;
  * A packet handler responsible for converting a ByteBuffer into a Packet
  * instance.
  * @author timothyb89
- * @param <T>
+ * @param <T> the generic packet type
  */
 public interface PacketHandler<T extends Packet> {
 	
