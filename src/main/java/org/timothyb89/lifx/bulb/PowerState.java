@@ -1,9 +1,12 @@
 package org.timothyb89.lifx.bulb;
 
+import lombok.extern.slf4j.Slf4j;
+
 /**
  * Represents bulb power states (on or off).
  * @author tim
  */
+@Slf4j
 public enum PowerState {
 	
 	ON(0xFFFF),
@@ -29,6 +32,8 @@ public enum PowerState {
 				return p;
 			}
 		}
+		
+		log.warn("Unknown power state ID: {}", value);
 		
 		return null;
 	}

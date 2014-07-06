@@ -6,8 +6,7 @@ import org.timothyb89.eventbus.Event;
 import org.timothyb89.lifx.net.packet.Packet;
 
 /**
- * An event dispatched when a packet has been received via a TCP gateway
- * connection.
+ * An event dispatched when a packet has been received for a particular gateway.
  * @author tim
  */
 @Data

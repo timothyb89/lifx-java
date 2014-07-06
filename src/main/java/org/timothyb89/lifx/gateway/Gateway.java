@@ -2,8 +2,6 @@ package org.timothyb89.lifx.gateway;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.ByteBuffer;
-import java.nio.channels.SocketChannel;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.LinkedList;
@@ -17,26 +15,30 @@ import org.timothyb89.eventbus.EventBus;
 import org.timothyb89.eventbus.EventBusClient;
 import org.timothyb89.eventbus.EventBusProvider;
 import org.timothyb89.eventbus.EventHandler;
+import org.timothyb89.eventbus.EventScanMode;
+import org.timothyb89.eventbus.EventScanType;
 import org.timothyb89.lifx.bulb.Bulb;
 import org.timothyb89.lifx.bulb.PowerState;
+import org.timothyb89.lifx.net.BroadcastListener;
+import org.timothyb89.lifx.net.PacketReceivedEvent;
 import org.timothyb89.lifx.net.field.MACAddress;
 import org.timothyb89.lifx.net.packet.Packet;
-import org.timothyb89.lifx.net.packet.PacketFactory;
-import org.timothyb89.lifx.net.packet.handler.PacketHandler;
 import org.timothyb89.lifx.net.packet.request.LightStatusRequest;
 import org.timothyb89.lifx.net.packet.request.SetPowerStateRequest;
 import org.timothyb89.lifx.net.packet.response.LightStatusResponse;
 
 /**
- * Defines a basic gateway. This class maintains a TCP connection to a gateway
+ * Defines a basic gateway. This handles interactions with a gateway
  * bulb which then dispatches commands to its connected bulbs (or potentially
  * itself).
- * @author tim
+ * @author timothyb89
  */
 @Slf4j
 @ToString(of = { "ipAddress", "port", "macAddress", "bulbs" })
+@EventScanMode(type = EventScanType.EXTENDED)
 public class Gateway implements EventBusProvider {
 	
+	@Getter private final BroadcastListener listener;
 	@Getter private final InetSocketAddress ipAddress;
 	@Getter private final int port;
 	@Getter private final MACAddress macAddress;
@@ -45,13 +47,20 @@ public class Gateway implements EventBusProvider {
 	
 	private final EventBus bus;
 	
-	private SocketChannel channel;
-	private Thread listenerThread;
-	private volatile boolean connected;
-	
 	private List<Bulb> bulbs;
 
-	public Gateway(InetSocketAddress ipAddress, int port, MACAddress macAddress) {
+	/**
+	 * Creates a new Gateway instance. This should generally only be called by
+	 * BroadcastListener.
+	 * @param listener a BroadcastListener instance, used for packet IO
+	 * @param ipAddress the IP address of this gateway
+	 * @param port the port used for IO
+	 * @param macAddress the MAC address of this gateway
+	 */
+	public Gateway(
+			BroadcastListener listener, InetSocketAddress ipAddress,
+			int port, MACAddress macAddress) {
+		this.listener = listener;
 		this.ipAddress = ipAddress;
 		this.port = port;
 		this.macAddress = macAddress;
@@ -61,14 +70,20 @@ public class Gateway implements EventBusProvider {
 		bulbs = Collections.synchronizedList(new LinkedList<Bulb>());
 		
 		bus = new EventBus() {{
-			add(GatewayConnectedEvent.class);
-			add(GatewayDisconnectedEvent.class);
 			add(GatewayPacketSentEvent.class);
 			add(GatewayPacketReceivedEvent.class);
 			add(GatewayBulbDiscoveredEvent.class);
 		}};
 		
+		listener.bus().register(this);
 		bus.register(this);
+		
+		// there's no connection process, so immediately start bulb discovery
+		try {
+			refreshBulbs();
+		} catch (IOException ex) {
+			log.warn("Unable to query gateway for bulbs", ex);
+		}
 	}
 
 	@Override
@@ -77,36 +92,18 @@ public class Gateway implements EventBusProvider {
 	}
 	
 	/**
-	 * Attempts to establish a TCP connection to this gateway.
-	 * @throws IOException on network error
+	 * Returns true if a socket is open for this gateway. Note that as of the
+	 * v1.2 firmware update all communication is done over UDP which changes the
+	 * semantics of this method. Currently this returns whether or not the
+	 * BroadcastListener is actually listening in lieu of a TCP connection.
+	 * @return true if currently able to communicate with bulb, false if not
 	 */
-	public void connect() throws IOException {
-		channel = SocketChannel.open();
-		channel.connect(new InetSocketAddress(ipAddress.getAddress(), port));
-		
-		listenerThread = new Thread(listener, "lifx-tcp-listen");
-		listenerThread.start();
-		
-		bus.push(new GatewayConnectedEvent(this));
-		
-		// try to find available bulbs
-		refreshBulbs();
-	}
-	
 	public boolean isConnected() {
 		//return channel != null && channel.isConnected();
 		// apparently channel.isConnected() does not actually tell you if the
 		// socket is connected - at least on android
 		// we do get usable EOFs, so we'll keep track ourselves
-		return connected;
-	}
-	
-	public void disconnect() {
-		try {
-			channel.close();
-		} catch (IOException ex) {
-			log.error("Error closing socket", ex);
-		}
+		return listener.isListening();
 	}
 	
 	/**
@@ -128,7 +125,7 @@ public class Gateway implements EventBusProvider {
 		PacketResponseFuture f = new PacketResponseFuture(packet);
 		responses.offer(f);
 		
-		channel.write(packet.bytes());
+		listener.send(packet, ipAddress);
 		
 		bus.push(new GatewayPacketSentEvent(this, packet, f));
 		
@@ -218,13 +215,62 @@ public class Gateway implements EventBusProvider {
 	public void turnOn() throws IOException {
 		setPowerState(PowerState.ON);
 	}
-	
-	@EventHandler
-	public void bulbDiscoveryListener(GatewayPacketReceivedEvent event) {
-		Packet p = event.getPacket();
 		
-		if (p instanceof LightStatusResponse) {
-			LightStatusResponse resp = (LightStatusResponse) p;
+	/**
+	 * Called when the BroadcastListener has received a packet.
+	 * @param event 
+	 */
+	@EventHandler
+	private void onPacketReceived(PacketReceivedEvent event) {
+		if (!event.getSource().equals(ipAddress)) {
+			// ignore packets from other gateways
+			return;
+		}
+		
+		Packet packet = event.getPacket();
+		int type = packet.getPacketType();
+		
+		log.debug("Packet {} for gateway {}", packet, this);
+		
+		bus.push(new GatewayPacketReceivedEvent(this, packet));
+					
+		// clean up fulfilled (empty) response futures
+		List<PacketResponseFuture> toRemove = new LinkedList<>();
+
+		// is this a response?
+		PacketResponseFuture recipient = null;
+		for (PacketResponseFuture f : responses) {
+			if (f.isFulfilled()) {
+				toRemove.add(f);
+				continue;
+			}
+
+			if (recipient == null
+					&& f.expectsResponse(type, packet.getBulbAddress())) {
+
+				log.debug("Response expected packet type {}",
+						String.format("0x%02X", type));
+
+				recipient = f;
+			}
+		}
+
+		responses.removeAll(toRemove);
+
+		// notify the recipient, if any
+		if (recipient != null) {
+			recipient.putResponse(packet);
+
+			if (recipient.isFulfilled()) {
+				log.debug("Fulfilled response");
+				responses.remove(recipient);
+				bus.push(new GatewayResponseFulfilledEvent(recipient));
+			}
+		}
+		
+		// check for a bulb discovery response
+		if (packet instanceof LightStatusResponse) {
+			LightStatusResponse resp = (LightStatusResponse) packet;
 			
 			Bulb bulb = getBulb(resp.getBulbAddress());
 			if (bulb == null) {
@@ -238,108 +284,5 @@ public class Gateway implements EventBusProvider {
 			}
 		}
 	}
-	
-	private Runnable listener = new Runnable() {
-
-		@Override
-		public void run() {
-			connected = true;
-			
-			while (true) {
-				try {
-					ByteBuffer sizeBuffer = ByteBuffer.allocate(2);
-					int read = channel.read(sizeBuffer);
-					if (read < 2) {
-						log.error("TCP listener reached EOF, terminating...");
-						break;
-					}
-					
-					sizeBuffer.rewind();
-					
-					int size = Packet.FIELD_SIZE.value(sizeBuffer);
-					
-					sizeBuffer.rewind();
-					
-					log.debug("Reading {} additional bytes ...", size);
-					
-					// append the size back into the final buffer, so we get
-					// a full packet (for the parser)
-					ByteBuffer buf = ByteBuffer.allocate(size);
-					buf.put(sizeBuffer);
-	
-					channel.read(buf);
-					buf.rewind();
-					
-					// extract the packet type (as in BroadcastListener)
-					ByteBuffer packetType = buf.slice();
-					packetType.position(32);
-					packetType.limit(34);
-					int type = Packet.FIELD_PACKET_TYPE.value(packetType);
-					
-					log.debug("Packet type {} received", String.format("0x%02X", type));
-					
-					// attempt to handle the packet
-					PacketHandler handler = PacketFactory.createHandler(type);
-					if (handler == null) {
-						log.debug("Unknown packet type: {}",
-								String.format("0x%02X", type));
-						continue;
-					}
-					
-					Packet packet = handler.handle(buf);
-					if (packet == null) {
-						log.warn("Handler {} was unable to handle packet",
-								handler.getClass().getName());
-						continue;
-					}
-					
-					bus.push(new GatewayPacketReceivedEvent(
-							Gateway.this, packet));
-					
-					// clean up fulfilled (empty) response futures
-					List<PacketResponseFuture> toRemove = new LinkedList<>();
-					
-					// is this a response?
-					PacketResponseFuture recipient = null;
-					for (PacketResponseFuture f : responses) {
-						if (f.isFulfilled()) {
-							toRemove.add(f);
-							continue;
-						}
-						
-						if (recipient == null&& f.expectsResponse(
-								type, packet.getBulbAddress())) {
-							
-							log.debug("Response expected packet type {}",
-									String.format("0x%02X", type));
-							
-							recipient = f;
-						}
-					}
-					
-					responses.removeAll(toRemove);
-					
-					// notify the recipient, if any
-					if (recipient != null) {
-						recipient.putResponse(packet);
-
-						if (recipient.isFulfilled()) {
-							log.debug("Fulfilled response");
-							responses.remove(recipient);
-							bus.push(new GatewayResponseFulfilledEvent(recipient));
-						}
-					}
-					
-				} catch (IOException ex) {
-					log.error("Error reading packet", ex);
-				}
-			}
-			
-			connected = false;
-			
-			bus.push(new GatewayDisconnectedEvent(Gateway.this));
-		}
-		
-	};
 	
 }

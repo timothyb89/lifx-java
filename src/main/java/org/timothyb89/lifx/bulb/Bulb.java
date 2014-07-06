@@ -18,8 +18,10 @@ import org.timothyb89.lifx.net.packet.response.LightStatusResponse;
 import org.timothyb89.lifx.net.packet.response.PowerStateResponse;
 
 /**
- *
- * @author tim
+ * Manages interactions directly with LIFX bulbs, and provides some abstractions
+ * for setting various properties of bulbs, like color, brightness, power, and
+ * so on.
+ * @author timothyb89
  */
 @ToString(of = { "label", "address", "powerState" })
 public class Bulb implements EventBusProvider {
@@ -53,18 +55,38 @@ public class Bulb implements EventBusProvider {
 		return bus.getClient();
 	}
 	
+	/**
+	 * Updates this bulb with information from the given packet. This particular
+	 * method will trigger a {@link BulbStatusUpdatedEvent}.
+	 * @param packet the packet to update from
+	 */
 	public void valuesFromPacket(LightStatusResponse packet) {
 		color = new LIFXColor(packet);
 		dim = packet.getDim();
 		label = packet.getLabel();
 		tags = packet.getTags();
 		
-		powerState = packet.getPower();
+		if (packet.getPower() != null) {
+			// for whatever reason, power state is occasionally null, i.e. it
+			// has some invalid (+unknown) value
+			// this seems to correct itself on the next update, but to avoid
+			// propagating a known-bad value we'll ignore it for now
+			// TODO: figure out what's up with this value and actually correct
+			// it
+			// see also: PowerState.fromValue(), where this originates (on our
+			// end)
+			powerState = packet.getPower();
+		}
 		
 		bus.push(new BulbStatusUpdatedEvent(
 				this, powerState, color, dim, label, tags));
 	}
 	
+	/**
+	 * Updates this bulb with information from the given packet. This particular
+	 * method will trigger a {@link BulbPowerStateUpdatedEvent}.
+	 * @param packet the packet to update from
+	 */
 	public void valuesFromPacket(PowerStateResponse packet) {
 		powerState = packet.getState();
 		
