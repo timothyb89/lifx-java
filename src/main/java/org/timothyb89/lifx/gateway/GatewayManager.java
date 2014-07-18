@@ -13,7 +13,7 @@ public class GatewayManager {
 	
 	private static GatewayManager instance;
 	
-	@Getter private final List<Gateway> gateways;
+	@Getter private List<Gateway> gateways;
 	
 	private GatewayManager() {
 		gateways = new ArrayList<>();
@@ -59,6 +59,16 @@ public class GatewayManager {
 		}
 		
 		return null;
+	}
+	
+	/**
+	 * Purges the list of gateways and bulbs. Note that any references still
+	 * held may or may not remain valid indefinitely; bulbs may "disappear" to
+	 * the client if the host system changes networks, if a bulb is turned off,
+	 * or for any number of other reasons. 
+	 */
+	public void purge() {
+		gateways = new ArrayList<>();
 	}
 	
 }
