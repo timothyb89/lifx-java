@@ -12,6 +12,7 @@ import org.timothyb89.lifx.gateway.GatewayPacketReceivedEvent;
 import org.timothyb89.lifx.gateway.PacketResponseFuture;
 import org.timothyb89.lifx.net.field.MACAddress;
 import org.timothyb89.lifx.net.packet.Packet;
+import org.timothyb89.lifx.net.packet.request.SetDimAbsoluteRequest;
 import org.timothyb89.lifx.net.packet.request.SetLightColorRequest;
 import org.timothyb89.lifx.net.packet.request.SetPowerStateRequest;
 import org.timothyb89.lifx.net.packet.response.LightStatusResponse;
@@ -27,6 +28,10 @@ import org.timothyb89.lifx.net.packet.response.PowerStateResponse;
 public class Bulb implements EventBusProvider {
 	
 	public static final long DEFAULT_FADE_TIME = 1000l;
+	
+	// TODO: packed into a uint, may need changing.
+	// units - seconds? millis?
+	public static final long DEFAULT_DIM_TIME  = 1l;
 	
 	@Getter private final Gateway gateway;
 	@Getter private final MACAddress address;
@@ -158,6 +163,42 @@ public class Bulb implements EventBusProvider {
 	public void setColor(LIFXColor color) throws IOException {
 		setColor(color, DEFAULT_FADE_TIME);
 	}
+	
+	/**
+	 * Attempts to set the brightness (dim) of this bulb. This is different from
+	 * the {@code brightness} of the HSBK color for the bulb.
+	 * @param dim a float representing brightness, between 0 and 1
+	 *     (inclusive)
+	 * @param duration the fade time, in seconds (??)
+	 * @throws java.io.IOException on network error
+	 */
+	public void setDim(float dim, long duration) throws IOException {
+		if (dim < 0.0f || dim > 1.0f) {
+			throw new IllegalArgumentException(
+					"Dim value must be between 0 and 1");
+		}
+		
+		// TODO: make sure we don't need to convert for data types / units / etc
+		
+		int raw = (int) (dim * 0xFFFF);
+		
+		send(new SetDimAbsoluteRequest(raw, DEFAULT_DIM_TIME));
+	}
+	
+	/**
+	 * Attempts to set the brightness (dim) of this bulb. This is different from
+	 * the {@code brightness} of the HSBK color for the bulb. A default fade
+	 * time of {@link #DEFAULT_DIM_TIME} is used.
+	 * @param dim a float representing brightness, between 0 and 1
+	 *     (inclusive)
+	 * @throws java.io.IOException on network error
+	 * @see #setDim(float, long) 
+	 */
+	public void setDim(float dim) throws IOException {
+		setDim(dim, DEFAULT_DIM_TIME);
+	}
+	
+	// TODO: setDimRaw
 	
 	@EventHandler
 	public void packetReceived(GatewayPacketReceivedEvent event) {
