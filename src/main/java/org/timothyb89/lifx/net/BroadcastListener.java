@@ -226,8 +226,9 @@ public class BroadcastListener implements EventBusProvider {
 						// attempt to parse the packet
 						PacketHandler handler = PacketFactory.createHandler(type);
 						if (handler == null) {
-							log.trace("Unknown packet type: {}",
-									String.format("0x%02X", type));
+							log.trace("Unknown packet type: {} (source: {})",
+									String.format("0x%02X", type),
+									a.toString());
 							continue;
 						}
 

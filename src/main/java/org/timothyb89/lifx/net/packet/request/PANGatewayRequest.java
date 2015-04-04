@@ -11,10 +11,13 @@ import org.timothyb89.lifx.net.packet.Packet;
 @ToString(callSuper = true)
 public class PANGatewayRequest extends Packet {
 
-	public static final int PROTOCOL_DEFAULT = 21504; // ??
+	public static final int TYPE = 0x02;
+	
+	//public static final int PROTOCOL_DEFAULT = 21504; // ??
 	
 	public PANGatewayRequest() {
-		protocol = PROTOCOL_DEFAULT;
+		// v2.0 protocol uses default protocol in Packet
+		//protocol = PROTOCOL_DEFAULT;
 	}
 	
 	@Override
@@ -24,7 +27,7 @@ public class PANGatewayRequest extends Packet {
 
 	@Override
 	public int packetType() {
-		return 0x02;
+		return TYPE;
 	}
 
 	@Override

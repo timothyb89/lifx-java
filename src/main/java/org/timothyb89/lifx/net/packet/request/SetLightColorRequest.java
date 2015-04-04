@@ -35,6 +35,8 @@ public class SetLightColorRequest extends Packet {
 
 	public SetLightColorRequest() {
 		stream = ByteBuffer.allocate(1);
+		
+		protocol = 0x1400;
 	}
 
 	public SetLightColorRequest(int hue, int saturation, int brightness, int kelvin, long fadeTime) {
@@ -45,6 +47,8 @@ public class SetLightColorRequest extends Packet {
 		this.brightness = brightness;
 		this.kelvin = kelvin;
 		this.fadeTime = fadeTime;
+		
+		protocol = 0x1400;
 	}
 	
 	public SetLightColorRequest(LIFXColor color, long fadeTime) {
@@ -56,6 +60,8 @@ public class SetLightColorRequest extends Packet {
 		saturation = color.getSaturation();
 		brightness = color.getValue();
 		kelvin = color.getKelvin();
+		
+		protocol = 0x1400;
 	}
 	
 	@Override
